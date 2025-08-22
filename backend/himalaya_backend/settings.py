@@ -10,9 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-
-
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -25,14 +22,13 @@ DEBUG = True
 # ALLOWED_HOSTS = ["*"]
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.AllowAny",
     ],
 }
-
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -42,9 +38,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'rest_framework',
     'events',
     'enroll',
+    'accounts',
     'corsheaders',
 ]
 
@@ -65,6 +64,7 @@ ROOT_URLCONF = 'himalaya_backend.urls'
 CORS_ORIGIN_WHITELIST = (
     'http://localhost:3000',
 )
+
 
 TEMPLATES = [
     {
@@ -87,13 +87,14 @@ WSGI_APPLICATION = 'himalaya_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'himalayadb',
-        'USER': 'root',      # change to your MySQL username
-        'PASSWORD': 'ad123',# your password here
-        'HOST': 'localhost',
+        'NAME': 'himalaya_db',
+        'USER': 'root',
+        'PASSWORD': 'ad123',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
     }
 }
@@ -140,4 +141,15 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# 
+# Use console email backend for now (prints link in terminal)
+
+AUTH_USER_MODEL = 'accounts.CustomUser'
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+}

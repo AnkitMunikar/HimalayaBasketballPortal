@@ -1,4 +1,4 @@
 from django.contrib import admin
-from .models import Event  # Import your Event model
+from .models import Event  # Only import Event from events app
 
-admin.site.register(Event)  # Register it so it appears in the admin
+admin.site.register(Event)

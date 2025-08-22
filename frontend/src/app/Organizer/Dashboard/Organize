@@ -1,0 +1,229 @@
+'use client';
+import { useAuth } from '@/components/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+
+export default function OrganizerTeamsPage() {
+  const { user, logout } = useAuth();
+  const router = useRouter();
+  const [teams, setTeams] = useState([]);
+  const [enrollments, setEnrollments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('all');
+
+  useEffect(() => {
+    if (!user || user.role !== 'event_organizer') {
+      router.push('/Login');
+      return;
+    }
+    
+    fetchData();
+  }, [user, router]);
+
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      
+      // Fetch all teams
+      const teamsResponse = await fetch('http://127.0.0.1:8000/api/organizer/teams/', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      // Fetch enrollments
+      const enrollmentsResponse = await fetch('http://127.0.0.1:8000/api/enroll/team/', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (teamsResponse.ok) {
+        const teamsData = await teamsResponse.json();
+        setTeams(teamsData);
+      }
+      
+      if (enrollmentsResponse.ok) {
+        const enrollmentsData = await enrollmentsResponse.json();
+        setEnrollments(enrollmentsData);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!user) return null;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <nav className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <img src="/logohim.png" alt="Logo" className="h-10 w-auto mr-4" />
+              <h1 className="text-xl font-bold text-gray-900">View Teams</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/organizer/dashboard')}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                ← Back to Dashboard
+              </button>
+              <span className="text-sm text-gray-600">Welcome, {user.name}</span>
+              <button
+                onClick={logout}
+                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+      
+      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Teams Overview</h2>
+          <p className="text-gray-600">View all registered teams and enrollments</p>
+        </div>
+
+        {/* Tabs */}
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'all'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                All Teams ({teams.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('enrolled')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'enrolled'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Event Enrollments ({enrollments.length})
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          </div>
+        ) : (
+          <div>
+            {activeTab === 'all' && (
+              <div>
+                {teams.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-gray-500 text-lg">No registered teams found</div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {teams.map((team) => (
+                      <div key={team.id} className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
+                        <div className="p-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-medium text-gray-900">{team.name}</h3>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              Team
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-2 text-sm text-gray-600">
+                            <div className="flex items-center">
+                              <span className="font-medium">Coach:</span>
+                              <span className="ml-2">{team.coach_name}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="font-medium">Created:</span>
+                              <span className="ml-2">{new Date(team.created_at).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                          
+                          <button className="mt-4 w-full bg-blue-500 text-white px-4 py-2 rounded text-sm hover:bg-blue-600 transition-colors">
+                            View Details
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'enrolled' && (
+              <div>
+                {enrollments.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-gray-500 text-lg">No event enrollments found</div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {enrollments.map((enrollment) => (
+                      <div key={enrollment.id} className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
+                        <div className="p-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-medium text-gray-900">{enrollment.team_name}</h3>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              {enrollment.gender}
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-2 text-sm text-gray-600">
+                            <div className="flex items-center">
+                              <span className="font-medium">Coach:</span>
+                              <span className="ml-2">{enrollment.coach_name}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="font-medium">Contact:</span>
+                              <span className="ml-2">{enrollment.contact_number}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="font-medium">Email:</span>
+                              <span className="ml-2">{enrollment.email}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="font-medium">Players:</span>
+                              <span className="ml-2 text-blue-600 font-semibold">{enrollment.players?.length || 0}</span>
+                            </div>
+                            {enrollment.event_details && (
+                              <div className="flex items-center">
+                                <span className="font-medium">Event:</span>
+                                <span className="ml-2">{enrollment.event_details.name}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center">
+                              <span className="font-medium">Enrolled:</span>
+                              <span className="ml-2">{new Date(enrollment.created_at).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                          
+                          <button className="mt-4 w-full bg-green-500 text-white px-4 py-2 rounded text-sm hover:bg-green-600 transition-colors">
+                            View Roster
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

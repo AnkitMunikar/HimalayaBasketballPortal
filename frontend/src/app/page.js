@@ -53,16 +53,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Scores Toggle */}
-      <div className="flex flex-col px-4 md:px-12 py-6 space-y-10">
-        <HideScoresToggle />
-      </div>
 
       {/* Display Form Section (Scroll Target) */}
-      <div
-        ref={displayFormRef}
-        className="flex flex-col px-4 md:px-12 py-6 space-y-10"
-      >
+      <div>
         <DisplayForm />
       </div>
     </main>
