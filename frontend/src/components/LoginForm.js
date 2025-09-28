@@ -25,7 +25,7 @@ export default function LoginForm() {
   const redirectBasedOnRole = (role) => {
     switch (role) {
       case 'event_organizer':
-        router.push('/organizer/dashboard');
+        router.push('/Organizer');
         break;
       case 'coach':
         router.push('/Coach');
@@ -40,6 +40,7 @@ export default function LoginForm() {
         router.push('/');
     }
   };
+  
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

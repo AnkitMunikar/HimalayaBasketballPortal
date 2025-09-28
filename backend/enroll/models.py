@@ -1,4 +1,4 @@
-
+# backend/enroll/models.py
 from django.db import models
 
 class TeamEnroll(models.Model):
@@ -13,7 +13,7 @@ class TeamEnroll(models.Model):
     coach_name = models.CharField(max_length=100, verbose_name="Coach Name")
     contact_number = models.CharField(max_length=15, verbose_name="Contact Number")
     email = models.EmailField(verbose_name="Email Address")
- 
+    # jersey_no = models.CharField(max_length=10, blank=True, null=True, verbose_name="Jersey Number")  # NEW FIELD
     event = models.ForeignKey('events.Event', on_delete=models.CASCADE, related_name='enrollments')
     team = models.ForeignKey('accounts.Team', on_delete=models.SET_NULL, null=True, blank=True, related_name='enrollments')
  
@@ -38,6 +38,7 @@ class Player(models.Model):
     player_name = models.CharField(max_length=100)
     age = models.IntegerField()
     position = models.CharField(max_length=2, choices=POSITION_CHOICES, blank=True, null=True)
+    # jersey_no = models.IntegerField(blank=True, null=True, verbose_name="Jersey Number")  # NEW FIELD
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

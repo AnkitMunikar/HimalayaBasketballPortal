@@ -11,6 +11,7 @@ export default function RegisterForm() {
     password2: '',
     role: '',
   });
+  
   const [message, setMessage] = useState('');
   const { login } = useAuth();
 
@@ -19,29 +20,34 @@ export default function RegisterForm() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (formData.password !== formData.password2) {
-      setMessage('Passwords do not match.');
-      return;
-    }
-    try {
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/signup/`, {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        role: formData.role,
-      });
-      await login(formData.email, formData.password);
-      setMessage('Registration successful!');
-    } catch (err) {
-      const errorMessage = err.response?.data?.detail || 
-                          err.response?.data?.email?.[0] || 
-                          err.response?.data?.non_field_errors?.[0] || 
-                          'Error registering. Please try again.';
-      setMessage(errorMessage);
-      console.error('Registration error:', err.response?.data || err.message);
-    }
-  };
+  e.preventDefault();
+  if (formData.password !== formData.password2) {
+    setMessage('Passwords do not match.');
+    return;
+  }
+  try {
+    const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/signup/`, {
+      name: formData.name,
+      username: formData.email, // Add this - use email as username
+      email: formData.email,
+      confirm_email: formData.email, // Add this
+      password: formData.password,
+      confirm_password: formData.password2, // Add this
+      role: formData.role,
+      phone:'',
+    });
+    
+    // Fix: Pass credentials object instead of separate parameters
+    await login({ 
+      username: formData.email, 
+      password: formData.password 
+    });
+    
+    setMessage('Registration successful!');
+  } catch (err) {
+    // ... error handling
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -62,19 +68,7 @@ export default function RegisterForm() {
                 onChange={handleChange}
               />
             </div>
-            <div>
-              <label htmlFor="name" className="sr-only">Last Name</label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                className="appearance-none rounded-t-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm font-fjalla-one"
-                placeholder="Full Name"
-                value={formData.name}
-                onChange={handleChange}
-              />
-            </div>
+            
             <div>
               <label htmlFor="email" className="sr-only">Email address</label>
               <input
@@ -123,9 +117,9 @@ export default function RegisterForm() {
                 value={formData.role}
                 onChange={handleChange}
               >
-                {/* <option value="player">Player</option> */}
+                
                 <option value="coach">Coach</option>
-                {/* <option value="parent">Parent</option> */}
+               
                 <option value="event_organizer">Event Organizer</option>
               </select>
             </div>

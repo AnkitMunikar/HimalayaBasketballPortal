@@ -1,9 +1,10 @@
+# backend/accounts/urls.py
 from django.urls import path
 from .views import (
     RegisterView, LogoutView,
     OrganizerTeamListCreate, OrganizerEventListCreate,
     CoachTeamListCreate, CoachEventList,
-    PlayerEventList, PlayerList,
+    PlayerEventList, PlayerList, CustomTokenObtainPairView,
     get_user   # 👈 add this
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -11,7 +12,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 urlpatterns = [
     # Authentication endpoints
     path('signup/', RegisterView.as_view(), name='signup'),
-    path('login/', TokenObtainPairView.as_view(), name='login'),
+    path('login/', CustomTokenObtainPairView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('user/', get_user, name='user'),   # 👈 NEW ENDPOINT

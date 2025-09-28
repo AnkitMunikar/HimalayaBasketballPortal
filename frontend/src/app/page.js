@@ -3,6 +3,7 @@ import { useRef } from "react";
 import Header from "@/components/Header";
 import HideScoresToggle from "@/components/HideScoresToggle";
 import DisplayForm from "@/components/DisplayForm";
+import Footer from "@/components/Footer";
 
 export default function HomePage() {
   const displayFormRef = useRef(null);
@@ -45,7 +46,7 @@ export default function HomePage() {
             {/* Click to Scroll */}
             <div
               onClick={handleEventsClick}
-              className="mt-8 cursor-pointer border-2 border-amber-50 text-white px-6 py-3 rounded-full text-lg font-semibold hover:bg-amber-500 hover:text-black transition-all duration-300 w-full sm:w-auto text-center"
+              className="mt-8 cursor-pointer bor  der-2 border-amber-50 text-white px-6 py-3 rounded-full text-lg font-semibold hover:bg-purple-800 hover:text-white transition-all duration-300 w-full sm:w-auto text-center"
             >
               Events
             </div>
@@ -58,6 +59,7 @@ export default function HomePage() {
       <div>
         <DisplayForm />
       </div>
+      <Footer/>
     </main>
   );
 }

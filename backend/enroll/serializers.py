@@ -1,6 +1,3 @@
-# 4. ENROLL/SERIALIZERS.PY - Remove grade field
-# ====================================================================================
-
 from rest_framework import serializers
 from .models import TeamEnroll, Player
 from events.serializers import EventSerializer
@@ -8,11 +5,11 @@ from events.serializers import EventSerializer
 class PlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
-        fields = ['id', 'player_name', 'age', 'position', 'created_at']  # Removed 'grade'
+        fields = ['id', 'player_name', 'age', 'position', 'created_at']
         read_only_fields = ['id', 'created_at']
 
 class EnrollSerializer(serializers.ModelSerializer):
-    players = PlayerSerializer(many=True, required=True)
+    players = PlayerSerializer(many=True, required=False)  # Make players optional
     event_details = EventSerializer(source='event', read_only=True)
 
     class Meta:
@@ -24,11 +21,12 @@ class EnrollSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
     def validate_players(self, value):
-        count = len(value)
-        if count < 8:
-            raise serializers.ValidationError("At least 8 players are required.")
-        if count > 15:
-            raise serializers.ValidationError("You can add up to 15 players only.")
+        if value:  # Only validate if players are provided
+            count = len(value)
+            if count < 8:
+                raise serializers.ValidationError("At least 8 players are required.")
+            if count > 15:
+                raise serializers.ValidationError("You can add up to 15 players only.")
         return value
 
     def validate(self, data):
@@ -53,18 +51,20 @@ class EnrollSerializer(serializers.ModelSerializer):
         return team
 
     def update(self, instance, validated_data):
-        players_data = validated_data.pop('players', [])
+        players_data = validated_data.pop('players', None)  # Allow updates without players
         
+        instance.team_name = validated_data.get('team_name', instance.team_name)
         instance.gender = validated_data.get('gender', instance.gender)
         instance.coach_name = validated_data.get('coach_name', instance.coach_name)
         instance.contact_number = validated_data.get('contact_number', instance.contact_number)
         instance.email = validated_data.get('email', instance.email)
+        instance.team = validated_data.get('team', instance.team)
         instance.save()
         
-        instance.players.all().delete()
-        
-        for player_data in players_data:
-            Player.objects.create(teamenroll=instance, **player_data)
+        if players_data is not None:  # Only update players if provided
+            instance.players.all().delete()
+            for player_data in players_data:
+                Player.objects.create(teamenroll=instance, **player_data)
         
         return instance
 

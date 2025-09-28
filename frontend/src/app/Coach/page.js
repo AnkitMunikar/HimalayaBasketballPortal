@@ -6,7 +6,9 @@ export default function Coach() {
   return (
     <main className="min-h-screen flex flex-col bg-gray-50">
       <Header />
+      <div className='mt-24'>
       <CoachDashboard />
+      </div>
     </main>
   );
 }

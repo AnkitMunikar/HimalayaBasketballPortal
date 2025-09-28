@@ -1,27 +1,40 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    // Check if user is logged in on mount
-    const token = localStorage.getItem('access_token');
-    const userData = localStorage.getItem('user_data');
-    
-    if (token && userData) {
-      try {
-        setUser(JSON.parse(userData));
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user_data');
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      const userData = localStorage.getItem('user_data');
+      
+      if (token && userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          console.log('Loaded user from localStorage:', parsedUser);
+          // Normalize role
+          if (parsedUser.role) {
+            const roleLower = parsedUser.role.toLowerCase();
+            if (roleLower === 'organizer') parsedUser.role = 'event_organizer';
+            if (roleLower === 'coach') parsedUser.role = 'coach';
+            if (roleLower === 'player') parsedUser.role = 'player';
+          }
+          setUser(parsedUser);
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user_data');
+        }
       }
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const login = async (credentials) => {
@@ -35,32 +48,47 @@ export const AuthProvider = ({ children }) => {
       });
 
       const data = await response.json();
+      console.log('Login response:', data);
 
       if (response.ok) {
+        const userData = data.user || { username: credentials.username, role: data.role || 'unknown' };
+        if (!userData.role) {
+          console.warn('No role provided in login response, defaulting to "unknown"');
+          userData.role = 'unknown';
+        }
+        // Normalize role
+        const roleLower = userData.role.toLowerCase();
+        if (roleLower === 'organizer') userData.role = 'event_organizer';
+        if (roleLower === 'coach') userData.role = 'coach';
+        if (roleLower === 'player') userData.role = 'player';
+        
         localStorage.setItem('access_token', data.access);
         localStorage.setItem('refresh_token', data.refresh);
-        
-        // Get user data
-        const userResponse = await fetch('http://127.0.0.1:8000/api/user/', {
-          headers: {
-            'Authorization': `Bearer ${data.access}`,
-          },
-        });
+        localStorage.setItem('user_data', JSON.stringify(userData));
+        setUser(userData);
+        console.log('User set after login:', userData);
 
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          localStorage.setItem('user_data', JSON.stringify(userData));
-          setUser(userData);
-          return { success: true, user: userData };
-        } else {
-          throw new Error('Failed to fetch user data');
-        }
+        // Delay redirection to ensure state update
+        setTimeout(() => {
+          if (userData.role === 'event_organizer') {
+            router.push('/organizer');
+          } else if (userData.role === 'coach') {
+            router.push('/coach');
+          } else if (userData.role === 'player') {
+            router.push('/player');
+          } else {
+            router.push('/');
+          }
+        }, 100);
+
+        return { success: true, user: userData };
       } else {
-        return { success: false, error: data };
+        console.error('Login failed:', data);
+        return { success: false, error: data.detail || data.message || 'Login failed. Please try again.' };
       }
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, error: { message: 'Network error. Please check your connection.' } };
+      return { success: false, error: 'Network error. Please check your connection.' };
     }
   };
 
@@ -79,11 +107,12 @@ export const AuthProvider = ({ children }) => {
       if (response.ok) {
         return { success: true, data };
       } else {
-        return { success: false, error: data };
+        console.error('Signup failed:', data);
+        return { success: false, error: data.detail || data.message || 'Signup failed. Please try again.' };
       }
     } catch (error) {
       console.error('Signup error:', error);
-      return { success: false, error: { message: 'Network error. Please check your connection.' } };
+      return { success: false, error: 'Network error. Please check your connection.' };
     }
   };
 
@@ -92,6 +121,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_data');
     setUser(null);
+    router.push('/login');
   };
 
   return (
