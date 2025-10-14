@@ -182,3 +182,15 @@ LOGGING = {
         },
     },
 }
+
+# Email Configuration - ADD THIS AT THE END OF YOUR settings.py
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your-email@gmail.com'  # Replace with your Gmail
+EMAIL_HOST_PASSWORD = 'xxxx xxxx xxxx xxxx'  # Replace with App Password from step 1
+DEFAULT_FROM_EMAIL = 'HIMALAYAB Basketball <your-email@gmail.com>'
+
+# Frontend URL for verification links
+SITE_URL = 'http://localhost:3000'  # Your React app URL

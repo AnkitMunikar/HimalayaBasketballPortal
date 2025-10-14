@@ -11,7 +11,7 @@ export default function Register() {
     phone: '',
     password: '',
     confirm_password: '',
-    role: 'player', // Default to player
+    role: 'player',
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -22,7 +22,6 @@ export default function Register() {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Clear specific error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -32,7 +31,6 @@ export default function Register() {
   const validateForm = () => {
     const newErrors = {};
 
-    // Required fields validation
     if (!formData.name.trim()) newErrors.name = 'Full name is required';
     if (!formData.username.trim()) newErrors.username = 'Username is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
@@ -41,28 +39,23 @@ export default function Register() {
     if (!formData.confirm_password) newErrors.confirm_password = 'Please confirm your password';
     if (!formData.role) newErrors.role = 'Please select a role';
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.email && !emailRegex.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
 
-    // Email matching
     if (formData.email && formData.confirm_email && formData.email !== formData.confirm_email) {
       newErrors.confirm_email = 'Emails do not match';
     }
 
-    // Password validation
     if (formData.password && formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters long';
     }
 
-    // Password matching
     if (formData.password && formData.confirm_password && formData.password !== formData.confirm_password) {
       newErrors.confirm_password = 'Passwords do not match';
     }
 
-    // Phone validation (optional but if provided, should be valid)
     if (formData.phone && formData.phone.length < 10) {
       newErrors.phone = 'Please enter a valid phone number';
     }
@@ -73,11 +66,9 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Clear previous messages
     setMessage('');
     setErrors({});
     
-    // Validate form
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -87,7 +78,6 @@ export default function Register() {
     setLoading(true);
 
     try {
-      // Registration API call
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/signup/`, {
         method: 'POST',
         headers: {
@@ -109,10 +99,8 @@ export default function Register() {
       console.log('Registration response:', data);
 
       if (response.ok) {
-        // Registration successful
         setMessage('Registration successful! Please login to continue.');
         
-        // Clear form
         setFormData({
           name: '',
           username: '',
@@ -124,12 +112,10 @@ export default function Register() {
           role: 'player',
         });
 
-        // Redirect to login page after 2 seconds
         setTimeout(() => {
           router.push('/Login');
         }, 2000);
       } else {
-        // Handle registration errors
         if (data.username) {
           setErrors(prev => ({ ...prev, username: data.username[0] }));
         }
@@ -165,231 +151,257 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-purple-800 flex items-center justify-center p-4">
-      <div className="bg-white mt-20 rounded-3xl shadow-2xl p-8 w-full max-w-md transform hover:scale-105 transition-all duration-300">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-800">Create Account</h2>
-          <p className="text-gray-600 mt-2">Join our basketball community</p>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
+      <div className="container mx-auto px-4 py-20 lg:py-24">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center max-w-7xl mx-auto">
+          
+          {/* Left Side - Form */}
+          <div className="order-2 lg:order-1">
+            <div className="bg-white/10 ">
+              <div className="mb-8">
+                <h1 className="text-3xl lg:text-4xl font-semibold text-gray-900 mb-2">Create Account</h1>
+                <p className="text-gray-700">Join our basketball community today</p>
+              </div>
+
+              {message && (
+                <div className={`mb-6 p-4 rounded-lg text-sm ${
+                  message.includes('successful') 
+                    ? 'bg-green-50 text-green-800 border border-green-200' 
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}>
+                  {message}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                
+                {/* Full Name */}
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-800 mb-1.5">
+                    Full Name <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2.5 bg-white/40 backdrop-blur-sm border rounded-lg focus:outline-none focus:ring-2 transition-all placeholder-gray-500 text-gray-900 ${
+                      errors.name 
+                        ? 'border-red-400 focus:ring-red-500' 
+                        : 'border-white/50 focus:ring-purple-500 focus:border-transparent'
+                    }`}
+                    placeholder="John Doe"
+                    disabled={loading}
+                  />
+                  {errors.name && <p className="text-red-700 text-xs mt-1.5 font-medium">{errors.name}</p>}
+                </div>
+
+                {/* Username */}
+                <div>
+                  <label htmlFor="username" className="block text-sm font-medium text-gray-800 mb-1.5">
+                    Username <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2.5 bg-white/40 backdrop-blur-sm border rounded-lg focus:outline-none focus:ring-2 transition-all placeholder-gray-500 text-gray-900 ${
+                      errors.username 
+                        ? 'border-red-400 focus:ring-red-500' 
+                        : 'border-white/50 focus:ring-purple-500 focus:border-transparent'
+                    }`}
+                    placeholder="johndoe"
+                    disabled={loading}
+                  />
+                  {errors.username && <p className="text-red-700 text-xs mt-1.5 font-medium">{errors.username}</p>}
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-800 mb-1.5">
+                    Email Address <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2.5 bg-white/40 backdrop-blur-sm border rounded-lg focus:outline-none focus:ring-2 transition-all placeholder-gray-500 text-gray-900 ${
+                      errors.email 
+                        ? 'border-red-400 focus:ring-red-500' 
+                        : 'border-white/50 focus:ring-purple-500 focus:border-transparent'
+                    }`}
+                    placeholder="john@example.com"
+                    disabled={loading}
+                  />
+                  {errors.email && <p className="text-red-700 text-xs mt-1.5 font-medium">{errors.email}</p>}
+                </div>
+
+                {/* Confirm Email */}
+                <div>
+                  <label htmlFor="confirm_email" className="block text-sm font-medium text-gray-800 mb-1.5">
+                    Confirm Email <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    id="confirm_email"
+                    name="confirm_email"
+                    value={formData.confirm_email}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2.5 bg-white/40 backdrop-blur-sm border rounded-lg focus:outline-none focus:ring-2 transition-all placeholder-gray-500 text-gray-900 ${
+                      errors.confirm_email 
+                        ? 'border-red-400 focus:ring-red-500' 
+                        : 'border-white/50 focus:ring-purple-500 focus:border-transparent'
+                    }`}
+                    placeholder="john@example.com"
+                    disabled={loading}
+                  />
+                  {errors.confirm_email && <p className="text-red-700 text-xs mt-1.5 font-medium">{errors.confirm_email}</p>}
+                </div>
+
+                {/* Phone Number */}
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-800 mb-1.5">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2.5 bg-white/40 backdrop-blur-sm border rounded-lg focus:outline-none focus:ring-2 transition-all placeholder-gray-500 text-gray-900 ${
+                      errors.phone 
+                        ? 'border-red-400 focus:ring-red-500' 
+                        : 'border-white/50 focus:ring-purple-500 focus:border-transparent'
+                    }`}
+                    placeholder="(123) 456-7890"
+                    disabled={loading}
+                  />
+                  {errors.phone && <p className="text-red-700 text-xs mt-1.5 font-medium">{errors.phone}</p>}
+                </div>
+
+                {/* Role */}
+                <div>
+                  <label htmlFor="role" className="block text-sm font-medium text-gray-800 mb-1.5">
+                    Role <span className="text-red-600">*</span>
+                  </label>
+                  <select
+                    id="role"
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2.5 bg-white/40 backdrop-blur-sm border rounded-lg focus:outline-none focus:ring-2 transition-all text-gray-900 ${
+                      errors.role 
+                        ? 'border-red-400 focus:ring-red-500' 
+                        : 'border-white/50 focus:ring-purple-500 focus:border-transparent'
+                    }`}
+                    disabled={loading}
+                  >
+                    <option value="player">Player</option>
+                    <option value="coach">Coach</option>
+                    <option value="event_organizer">Event Organizer</option>
+                  </select>
+                  {errors.role && <p className="text-red-700 text-xs mt-1.5 font-medium">{errors.role}</p>}
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-800 mb-1.5">
+                    Password <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2.5 bg-white/40 backdrop-blur-sm border rounded-lg focus:outline-none focus:ring-2 transition-all placeholder-gray-500 text-gray-900 ${
+                      errors.password 
+                        ? 'border-red-400 focus:ring-red-500' 
+                        : 'border-white/50 focus:ring-purple-500 focus:border-transparent'
+                    }`}
+                    placeholder="••••••••"
+                    disabled={loading}
+                  />
+                  {errors.password && <p className="text-red-700 text-xs mt-1.5 font-medium">{errors.password}</p>}
+                </div>
+
+                {/* Confirm Password */}
+                <div>
+                  <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-800 mb-1.5">
+                    Confirm Password <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    id="confirm_password"
+                    name="confirm_password"
+                    value={formData.confirm_password}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2.5 bg-white/40 backdrop-blur-sm border rounded-lg focus:outline-none focus:ring-2 transition-all placeholder-gray-500 text-gray-900 ${
+                      errors.confirm_password
+                        ? 'border-red-400 focus:ring-red-500'
+                        : 'border-white/50 focus:ring-purple-500 focus:border-transparent'
+                    }`}
+                    placeholder="••••••••"
+                    disabled={loading}
+                  />
+                  {errors.confirm_password && (
+                    <p className="text-red-700 text-xs mt-1.5 font-medium">{errors.confirm_password}</p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transform transition-all duration-200 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none mt-2"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Creating Account...
+                    </span>
+                  ) : (
+                    'Create Account'
+                  )}
+                </button>
+
+                <div className="text-center pt-4">
+                  <p className="text-sm text-gray-600">
+                    Already have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => router.push('/Login')}
+                      className="text-purple-600 hover:text-purple-700 font-medium transition-colors"
+                    >
+                      Sign In
+                    </button>
+                  </p>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* Right Side - Logo */}
+          <div className="order-1 lg:order-2 flex items-center justify-center">
+            <div className="relative w-full max-w-md lg:max-w-lg">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full blur-3xl opacity-20 animate-pulse"></div>
+              <img 
+                src="/logohim.png" 
+                alt="Logo" 
+                className="relative z-10 w-full h-auto drop-shadow-2xl" 
+              />
+            </div>
+          </div>
+
         </div>
-
-        {message && (
-          <div className={`mb-6 p-4 border rounded-lg ${
-            message.includes('successful') 
-              ? 'bg-green-100 border-green-300 text-green-700' 
-              : 'bg-red-100 border-red-300 text-red-700'
-          }`}>
-            {message}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Full Name */}
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Full Name *
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all duration-300 ${
-                errors.name 
-                  ? 'border-red-300 focus:border-red-500' 
-                  : 'border-gray-200 focus:border-blue-500'
-              }`}
-              placeholder="Enter your full name"
-              disabled={loading}
-            />
-            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-          </div>
-
-          {/* Username */}
-          <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-              Username *
-            </label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all duration-300 ${
-                errors.username 
-                  ? 'border-red-300 focus:border-red-500' 
-                  : 'border-gray-200 focus:border-blue-500'
-              }`}
-              placeholder="Choose a username"
-              disabled={loading}
-            />
-            {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
-          </div>
-
-          {/* Email */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address *
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all duration-300 ${
-                errors.email 
-                  ? 'border-red-300 focus:border-red-500' 
-                  : 'border-gray-200 focus:border-blue-500'
-              }`}
-              placeholder="Enter your email"
-              disabled={loading}
-            />
-            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-          </div>
-
-          {/* Confirm Email */}
-          <div>
-            <label htmlFor="confirm_email" className="block text-sm font-medium text-gray-700 mb-1">
-              Confirm Email *
-            </label>
-            <input
-              type="email"
-              id="confirm_email"
-              name="confirm_email"
-              value={formData.confirm_email}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all duration-300 ${
-                errors.confirm_email 
-                  ? 'border-red-300 focus:border-red-500' 
-                  : 'border-gray-200 focus:border-blue-500'
-              }`}
-              placeholder="Confirm your email"
-              disabled={loading}
-            />
-            {errors.confirm_email && <p className="text-red-500 text-sm mt-1">{errors.confirm_email}</p>}
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number (Optional)
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all duration-300 ${
-                errors.phone 
-                  ? 'border-red-300 focus:border-red-500' 
-                  : 'border-gray-200 focus:border-blue-500'
-              }`}
-              placeholder="Enter your phone number"
-              disabled={loading}
-            />
-            {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
-          </div>
-
-          {/* Role */}
-          <div>
-            <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-              I am a *
-            </label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all duration-300 ${
-                errors.role 
-                  ? 'border-red-300 focus:border-red-500' 
-                  : 'border-gray-200 focus:border-blue-500'
-              }`}
-              disabled={loading}
-            >
-              <option value="player">Player</option>
-              <option value="coach">Coach</option>
-              <option value="event_organizer">Event Organizer</option>
-            </select>
-            {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
-          </div>
-
-          {/* Password */}
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password *
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all duration-300 ${
-                errors.password 
-                  ? 'border-red-300 focus:border-red-500' 
-                  : 'border-gray-200 focus:border-blue-500'
-              }`}
-              placeholder="Choose a password"
-              disabled={loading}
-            />
-            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-          </div>
-
-          {/* Confirm Password */}
-          <div>
-            <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-700 mb-1">
-              Confirm Password *
-            </label>
-            <input
-              type="password"
-              id="confirm_password"
-              name="confirm_password"
-              value={formData.confirm_password}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all duration-300 ${
-                errors.confirm_password
-                  ? 'border-red-300 focus:border-red-500'
-                  : 'border-gray-200 focus:border-blue-500'
-              }`}
-              placeholder="Re-enter your password"
-              disabled={loading}
-            />
-            {errors.confirm_password && (
-              <p className="text-red-500 text-sm mt-1">{errors.confirm_password}</p>
-            )}
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-3 px-6 rounded-xl text-white font-semibold shadow-lg transition-all duration-300 ${
-              loading
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-            }`}
-          >
-            {loading ? 'Creating Account...' : 'Register'}
-          </button>
-
-          {/* Login Link */}
-          <div className="text-center mt-4">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <button
-                type="button"
-                onClick={() => router.push('/Login')}
-                className="text-blue-600 hover:text-blue-800 font-semibold"
-              >
-                Sign In
-              </button>
-            </p>
-          </div>
-        </form>
       </div>
     </div>
   );

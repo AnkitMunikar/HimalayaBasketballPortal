@@ -36,8 +36,8 @@ export default function Header() {
           <li><span onClick={() => navigate('/stats')} className="cursor-pointer hover:text-blue-400">Stats</span></li> */}
           {user?.role === 'event_organizer' && (
             <>
-              <li><span onClick={() => navigate('/organizer')} className="cursor-pointer hover:text-blue-400">Organizer Dashboard</span></li>
-              <li><span onClick={() => navigate('/organizer/create')} className="cursor-pointer hover:text-blue-400">Create Events</span></li>
+              <li><span onClick={() => navigate('/Organizer')} className="cursor-pointer hover:text-blue-400">Organizer Dashboard</span></li>
+              <li><span onClick={() => navigate('/Organizer/create')} className="cursor-pointer hover:text-blue-400">Create Events</span></li>
             </>
           )}
           {user?.role === 'coach' && (
