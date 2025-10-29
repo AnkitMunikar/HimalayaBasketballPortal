@@ -1,10 +1,12 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Users, Trophy, Clock, DollarSign } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Calendar, MapPin, Users, Trophy, Clock, DollarSign, Zap, Award } from 'lucide-react';
 
 const API_BASE = 'http://localhost:8000/api';
 
 const DisplayForm = () => {
+  const router = useRouter();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -15,6 +17,12 @@ const DisplayForm = () => {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      fetchEvents();
+    }
+  }, [mounted]);
 
   const fetchEvents = async () => {
     try {
@@ -99,16 +107,16 @@ const DisplayForm = () => {
       }
 
       try {
+        // Backend already filters expired events (date__gte=today)
+        // Frontend only handles search and type filtering
         const matchesSearch = event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                              event.venue.toLowerCase().includes(searchTerm.toLowerCase());
 
         if (filter === 'all') return matchesSearch;
         
         if (filter === 'upcoming') {
-          if (!event.date) return false;
-          const eventDate = new Date(event.date);
-          const today = new Date();
-          return eventDate >= today && matchesSearch;
+          // All events from backend are upcoming, just apply search filter
+          return matchesSearch;
         }
         
         if (filter === 'tournament') {
@@ -149,12 +157,19 @@ const DisplayForm = () => {
   };
 
   const isUpcoming = (dateString) => {
+    // Check if event date is in the future (strictly greater than today)
     if (!dateString) return false;
     
     try {
       const eventDate = new Date(dateString);
       const today = new Date();
-      return !isNaN(eventDate.getTime()) && eventDate >= today;
+      
+      // Set both to start of day for fair comparison
+      today.setHours(0, 0, 0, 0);
+      eventDate.setHours(0, 0, 0, 0);
+      
+      // Event is upcoming only if it's AFTER today (not today or past)
+      return !isNaN(eventDate.getTime()) && eventDate > today;
     } catch (error) {
       console.error('Error checking if upcoming:', dateString, error);
       return false;
@@ -196,151 +211,162 @@ const DisplayForm = () => {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto mt-16" suppressHydrationWarning={true}>
-      <div className="mb-8 space-y-4">
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="relative flex-1 max-w-md">
-            <input
-              type="text"
-              placeholder="Search events..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-4 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+    <div className="w-full bg-white min-h-screen py-8" suppressHydrationWarning={true}>
+      <div className="w-full max-w-7xl mx-auto px-4">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Events</h1>
+          <p className="text-gray-600">Browse and register for upcoming tournaments and leagues</p>
+        </div>
+
+        {/* Search & Filter Section */}
+        <div className="mb-8 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div className="relative flex-1 max-w-md">
+              <input
+                type="text"
+                placeholder="Search events..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-4 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div className="flex gap-2 flex-wrap">
+              {[
+                { key: 'all', label: 'All Events' },
+                { key: 'upcoming', label: 'Upcoming' },
+                { key: 'tournament', label: 'Tournaments' },
+                { key: 'league', label: 'Leagues' }
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setFilter(key)}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                    filter === key
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="flex gap-2 flex-wrap">
-            {[
-              { key: 'all', label: 'All Events' },
-              { key: 'upcoming', label: 'Upcoming' },
-              { key: 'tournament', label: 'Tournaments' },
-              { key: 'league', label: 'Leagues' }
-            ].map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => setFilter(key)}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-                  filter === key
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                }`}
+          <div className="text-center text-gray-600 text-sm">
+            {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''} found
+          </div>
+        </div>
+
+        {/* Events Horizontal Bars */}
+        {filteredEvents.length === 0 ? (
+          <div className="text-center py-12">
+            <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No events found</h3>
+            <p className="text-gray-600">
+              {searchTerm || filter !== 'all' 
+                ? 'Try adjusting your search or filters.' 
+                : 'Check back soon for upcoming tournaments and events.'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredEvents.map(event => (
+              <div
+                key={event.id || Math.random()}
+                className="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow duration-300 cursor-pointer"
+                onClick={() => router.push(`/DisplayEvents/${event.id}`)}
               >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="text-center text-gray-600">
-          {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''} found
-        </div>
-      </div>
-
-      {filteredEvents.length === 0 ? (
-        <div className="text-center py-12">
-          <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">No events found</h3>
-          <p className="text-gray-600">
-            {searchTerm || filter !== 'all' 
-              ? 'Try adjusting your search or filters.' 
-              : 'Check back soon for upcoming tournaments and events.'}
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredEvents.map(event => (
-            <div
-              key={event.id || Math.random()}
-              className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
-            >
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
-                <div className="flex justify-between items-start">
-                  <h3 className="text-xl font-bold text-white mb-2">
-                    {event.name || 'Unnamed Event'}
-                  </h3>
-                  {isUpcoming(event.date) && (
-                    <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                      Upcoming
-                    </span>
+                {/* Logo */}
+                <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                  {event.logo ? (
+                    <img 
+                      src={event.logo} 
+                      alt={event.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Award className="w-12 h-12 text-gray-400" />
                   )}
                 </div>
-                <p className="text-blue-100 text-sm">
-                  Organized by {event.organizer_name || 'Unknown Organizer'}
-                </p>
-              </div>
 
-              <div className="p-6 space-y-3">
-                <div className="flex items-center text-gray-600">
-                  <Calendar className="w-5 h-5 mr-3 text-blue-500" />
-                  <span className="font-medium">{formatDate(event.date)}</span>
-                </div>
-
-                <div className="flex items-center text-gray-600">
-                  <MapPin className="w-5 h-5 mr-3 text-red-500" />
-                  <span>{event.venue || 'Venue TBD'}</span>
-                </div>
-                
-                {event.city && (
-                  <div className="flex items-center text-gray-600">
-                    <MapPin className="w-5 h-5 mr-3 text-red-500" />
-                    <span>{event.city}</span>
+                {/* Event Details */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900 truncate">
+                      {event.name || 'Unnamed Event'}
+                    </h3>
+                    {isUpcoming(event.date) && (
+                      <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full flex-shrink-0">
+                        Upcoming
+                      </span>
+                    )}
                   </div>
-                )}
+                  <p className="text-sm text-gray-500 mb-2">{event.organizer_name || 'Unknown Organizer'}</p>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                    <div className="flex items-center text-gray-600">
+                      <Calendar className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
+                      <span className="truncate">{formatDate(event.date)}</span>
+                    </div>
 
-                <div className="flex items-center text-gray-600">
-                  <Users className="w-5 h-5 mr-3 text-green-500" />
-                  <span>
-                    {event.gender || 'Any'} • {event.level || 'All Levels'}
-                  </span>
-                </div>
+                    <div className="flex items-center text-gray-600">
+                      <MapPin className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                      <span className="truncate">{event.venue || 'Venue TBD'}</span>
+                    </div>
 
-                <div className="flex items-center text-gray-600">
-                  <Clock className="w-5 h-5 mr-3 text-purple-500" />
-                  <span>{event.duration_type || 'Event'}</span>
-                </div>
+                    <div className="flex items-center text-gray-600">
+                      <Users className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                      <span className="truncate">{event.gender || 'Any'} • {event.level || 'All'}</span>
+                    </div>
 
-                <div className="flex items-center text-gray-600">
-                  <DollarSign className="w-5 h-5 mr-3 text-amber-500" />
-                  <span className="font-medium">
-                    {event.payment === 'Free' || !event.payment 
-                      ? 'Free Entry' 
-                      : `${event.payment}`}
-                  </span>
-                </div>
+                    <div className="flex items-center text-gray-600">
+                      <Clock className="w-4 h-4 mr-2 text-purple-500 flex-shrink-0" />
+                      <span className="truncate">{event.duration_type || 'Event'}</span>
+                    </div>
 
-                <div className="pt-3 border-t border-gray-200">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">Teams Enrolled:</span>
-                    <span className="font-bold text-blue-600">
-                      {event.enrolled_teams_count || 0}
-                    </span>
+                    <div className="flex items-center text-gray-600">
+                      <DollarSign className="w-4 h-4 mr-2 text-amber-500 flex-shrink-0" />
+                      <span className="truncate">
+                        {event.payment === 'Free' || !event.payment 
+                          ? 'Free Entry' 
+                          : `${event.payment}`}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center text-gray-600">
+                      <Trophy className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
+                      <span className="truncate">{event.enrolled_teams_count || 0} Teams</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="pt-4">
+                {/* Action Button */}
+                <div className="flex-shrink-0">
                   {isUpcoming(event.date) ? (
                     <button 
-                      className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                      className="bg-blue-500 text-white py-2 px-6 rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm whitespace-nowrap"
                       onClick={() => {
                         alert('Coach Account required');
                       }}
                     >
-                      Register Team
+                      Register
                     </button>
                   ) : (
                     <button 
                       disabled
-                      className="w-full bg-gray-300 text-gray-500 py-2 px-4 rounded-lg cursor-not-allowed"
+                      className="bg-gray-300 text-gray-500 py-2 px-6 rounded-lg cursor-not-allowed font-medium text-sm whitespace-nowrap"
                     >
                       Event Completed
                     </button>
                   )}
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

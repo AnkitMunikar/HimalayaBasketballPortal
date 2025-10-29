@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Calendar, Plus, Trophy, MapPin, DollarSign, Edit, Eye, UserPlus, Trash2, User } from 'lucide-react';
+import { Users, Calendar, Plus, Trophy, MapPin, DollarSign, Edit, Eye, UserPlus, Trash2, User, Award, Zap } from 'lucide-react';
 
 const API_BASE = 'http://localhost:8000/api';
 
@@ -163,6 +163,17 @@ const CoachDashboard = () => {
 
         if (!formData.team_name.trim()) {
           setFormError('Team name is required');
+          setFormLoading(false);
+          return;
+        }
+
+        // Check if team is already enrolled in this event
+        const alreadyEnrolled = enrolledTeams.some(
+          team => team.team_name === formData.team_name.trim() && team.event === event.id
+        );
+
+        if (alreadyEnrolled) {
+          setFormError('This team is already enrolled in this event. Duplicate enrollments are not allowed.');
           setFormLoading(false);
           return;
         }
@@ -656,45 +667,76 @@ const CoachDashboard = () => {
                   <h3 className="text-lg font-medium mb-2">No events available</h3>
                 </div>
               ) : (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="space-y-3">
                   {events.map((event) => (
-                    <div key={event.id} className="bg-gray-50 rounded-lg p-6 border hover:shadow-md">
-                      <div className="flex justify-between mb-4">
-                        <h3 className="text-lg font-semibold">{event.name}</h3>
-                        <span
-                          className={`px-2 py-1 text-xs rounded-full ${
-                            isUpcoming(event.date) ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                          }`}
+                    <div
+                      key={event.id}
+                      className="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow duration-300"
+                    >
+                      {/* Logo */}
+                      <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                        {event.logo ? (
+                          <img 
+                            src={event.logo} 
+                            alt={event.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Award className="w-12 h-12 text-gray-400" />
+                        )}
+                      </div>
+
+                      {/* Event Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900 truncate">
+                            {event.name || 'Unnamed Event'}
+                          </h3>
+                          {isUpcoming(event.date) && (
+                            <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full flex-shrink-0">
+                              Upcoming
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500 mb-2">{event.organizer_name || 'Unknown Organizer'}</p>
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                          <div className="flex items-center text-gray-600">
+                            <Calendar className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
+                            <span className="truncate">{formatDate(event.date)}</span>
+                          </div>
+
+                          <div className="flex items-center text-gray-600">
+                            <MapPin className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                            <span className="truncate">{event.venue || 'Venue TBD'}</span>
+                          </div>
+
+                          <div className="flex items-center text-gray-600">
+                            <Users className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                            <span className="truncate">{event.gender || 'Any'} • {event.level || 'All'}</span>
+                          </div>
+
+                          <div className="flex items-center text-gray-600">
+                            <DollarSign className="w-4 h-4 mr-2 text-amber-500 flex-shrink-0" />
+                            <span className="truncate">
+                              {event.payment === 'Free' || !event.payment 
+                                ? 'Free Entry' 
+                                : `${event.payment}`}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Button */}
+                      <div className="flex-shrink-0">
+                        <button
+                          onClick={() => handleEnrollClick(event)}
+                          disabled={!isUpcoming(event.date)}
+                          className="bg-blue-500 text-white py-2 px-6 rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {isUpcoming(event.date) ? 'Upcoming' : 'Past'}
-                        </span>
+                          Enroll Team
+                        </button>
                       </div>
-                      <div className="space-y-2 mb-4 text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-2" />
-                          {formatDate(event.date)}
-                        </div>
-                        <div className="flex items-center">
-                          <MapPin className="w-4 h-4 mr-2" />
-                          {event.venue || 'Venue TBD'}, {event.city || 'City TBD'}
-                        </div>
-                        <div className="flex items-center">
-                          <Users className="w-4 h-4 mr-2" />
-                          {event.gender} • {event.level}
-                        </div>
-                        <div className="flex items-center">
-                          <DollarSign className="w-4 h-4 mr-2" />
-                          {event.payment === 'Free' ? 'Free Entry' : event.payment}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleEnrollClick(event)}
-                        disabled={!isUpcoming(event.date)}
-                        className="w-full bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:opacity-50 text-sm"
-                      >
-                        <Plus className="w-4 h-4 inline mr-1" />
-                        Enroll Team
-                      </button>
                     </div>
                   ))}
                 </div>
@@ -726,50 +768,66 @@ const CoachDashboard = () => {
                     </button>
                   </div>
                 ) : (
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="space-y-3">
                     {enrolledTeams.map((team) => (
-                      <div key={team.id} className="bg-gray-50 rounded-lg p-6 border hover:shadow-md">
-                        <div className="flex justify-between mb-4">
-                          <h3 className="text-lg font-semibold">{team.team_name}</h3>
-                          <span
-                            className={`px-2 py-1 text-xs rounded-full ${
-                              isUpcoming(team.event_details?.date) ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                            }`}
-                          >
-                            {isUpcoming(team.event_details?.date) ? 'Upcoming' : 'Past'}
-                          </span>
+                      <div
+                        key={team.id}
+                        className="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow duration-300"
+                      >
+                        {/* Logo */}
+                        <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                          <Trophy className="w-12 h-12 text-gray-400" />
                         </div>
-                        <div className="space-y-2 mb-4 text-sm text-gray-600">
-                          <div className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-2" />
-                            {formatDate(team.event_details?.date)}
+
+                        {/* Team Details */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-lg font-semibold text-gray-900 truncate">
+                              {team.team_name}
+                            </h3>
+                            {isUpcoming(team.event_details?.date) && (
+                              <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full flex-shrink-0">
+                                Active
+                              </span>
+                            )}
                           </div>
-                          <div className="flex items-center">
-                            <MapPin className="w-4 h-4 mr-2" />
-                            {team.event_details?.name}
-                          </div>
-                          <div className="flex items-center">
-                            <Users className="w-4 h-4 mr-2" />
-                            {team.players?.length || 0} players
-                          </div>
-                          <div>
-                            <span className="font-medium">Gender:</span> {team.gender}
-                          </div>
-                          <div>
-                            <span className="font-medium">Coach:</span> {team.coach_name}
+                          <p className="text-sm text-gray-500 mb-2">Coach: {team.coach_name}</p>
+                          
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                            <div className="flex items-center text-gray-600">
+                              <Calendar className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
+                              <span className="truncate">{formatDate(team.event_details?.date)}</span>
+                            </div>
+
+                            <div className="flex items-center text-gray-600">
+                              <Trophy className="w-4 h-4 mr-2 text-purple-500 flex-shrink-0" />
+                              <span className="truncate">{team.event_details?.name}</span>
+                            </div>
+
+                            <div className="flex items-center text-gray-600">
+                              <Users className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                              <span className="truncate">{team.players?.length || 0} Players</span>
+                            </div>
+
+                            <div className="flex items-center text-gray-600">
+                              <MapPin className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                              <span className="truncate">{team.gender}</span>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex gap-2">
+
+                        {/* Action Buttons */}
+                        <div className="flex-shrink-0 flex gap-2">
                           <button
                             onClick={() => handleViewPlayers(team)}
-                            className="flex-1 bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 text-sm"
+                            className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm whitespace-nowrap"
                           >
                             <Eye className="w-4 h-4 inline mr-1" />
                             View
                           </button>
                           <button
                             onClick={() => handleEditTeam(team)}
-                            className="flex-1 bg-green-500 text-white px-3 py-2 rounded-md hover:bg-green-600 text-sm"
+                            className="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors font-medium text-sm whitespace-nowrap"
                           >
                             <Edit className="w-4 h-4 inline mr-1" />
                             Edit

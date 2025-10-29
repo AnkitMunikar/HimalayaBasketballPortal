@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 
 class EventSerializer(serializers.ModelSerializer):
     organizer_name = serializers.CharField(source='organizer.name', read_only=True)
+    enrolled_teams_count = serializers.SerializerMethodField(read_only=True)
 
     def validate_payment(self, value):
         if value.lower() == 'free':
@@ -43,12 +44,16 @@ class EventSerializer(serializers.ModelSerializer):
             validated_data['organizer'] = self.context['request'].user
         return super().create(validated_data)
 
+    def get_enrolled_teams_count(self, obj):
+        """Get the count of enrolled teams for this event"""
+        return obj.enrollments.count()
+
     class Meta:
         model = Event
         fields = [
             'id', 'name', 'description', 'date', 'venue', 'city', 'gender',
             'level', 'duration_type', 'payment', 'organizer', 'organizer_name',
             'logo', 'venue_receipt', 'approval_status', 'rejection_reason',
-            'approved_by', 'approved_at'
+            'approved_by', 'approved_at', 'enrolled_teams_count'
         ]
-        read_only_fields = ['id', 'organizer_name', 'approval_status', 'rejection_reason', 'approved_by', 'approved_at']
+        read_only_fields = ['id', 'organizer_name', 'approval_status', 'rejection_reason', 'approved_by', 'approved_at', 'enrolled_teams_count']

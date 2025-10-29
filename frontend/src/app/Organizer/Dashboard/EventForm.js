@@ -1,7 +1,32 @@
 import { useState } from 'react';
-import { Calendar, DollarSign, Trophy, Upload, X, FileText, Paperclip } from 'lucide-react';
+import { Calendar, DollarSign, Trophy, Upload, X, FileText, Paperclip, MapPin, Users, Target } from 'lucide-react';
 
 export default function EventForm({ onEventSubmitted }) {
+  const nepalCities = [
+    'Kathmandu',
+    'Pokhara',
+    'Lalitpur',
+    'Bhaktapur',
+    'Biratnagar',
+    'Janakpur',
+    'Hetauda',
+    'Dhulikhel',
+    'Gorkha',
+    'Ilam',
+    'Jhapa',
+    'Nepalgunj',
+    'Birganj',
+    'Dharan',
+    'Chitwan',
+    'Dolakha',
+    'Okhaldhunga',
+    'Siraha',
+    'Rupandehi',
+    'Udaypur',
+    'Sindhuli',
+    'Ramechhap',
+  ].sort();
+
   const [formData, setFormData] = useState({
     name: '',
     date: '',
@@ -109,6 +134,14 @@ export default function EventForm({ onEventSubmitted }) {
     }
     if (!validatePayment(formData.payment)) {
       setError("Payment must be a number or the word 'Free'");
+      return false;
+    }
+    if (!files.logo) {
+      setError('Event logo is required');
+      return false;
+    }
+    if (!files.receipt) {
+      setError('Venue receipt PDF is required');
       return false;
     }
 
@@ -249,282 +282,372 @@ export default function EventForm({ onEventSubmitted }) {
     }
   };
 
+  const isFileUploadComplete = files.logo && files.receipt;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-8">
-          <Trophy className="w-16 h-16 text-violet-600 mx-auto mb-4" />
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Create Tournament Event</h1>
-          <p className="text-gray-600">Fill in the details and upload your event materials</p>
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 py-12 px-4">
+      <div className="max-w-5xl mx-auto">
+        {/* Header Section - NBA Style */}
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="h-1 w-12 bg-gradient-to-r from-blue-500 to-transparent"></div>
+            <Trophy className="w-12 h-12 text-yellow-400 drop-shadow-lg" />
+            <div className="h-1 w-12 bg-gradient-to-l from-blue-500 to-transparent"></div>
+          </div>
+          <h1 className="text-5xl font-black text-white mb-3 tracking-tight">
+            HIMALAYA BASKETBALL PORTAL
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 mt-1">
+              FORM REGISTRATION
+            </span>
+          </h1>
+          <p className="text-slate-300 text-lg font-medium">Complete all fields to submit your event for approval</p>
         </div>
 
+        {/* Success Alert */}
         {success && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-4 rounded-xl mb-6 flex items-start">
-            <div className="mr-3 mt-0.5 text-lg">✅</div>
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 border-l-4 border-green-300 text-white px-6 py-4 rounded-lg mb-8 flex items-start shadow-xl">
+            <div className="mr-4 text-2xl">✅</div>
             <div>
-              <p className="font-semibold">Event created successfully!</p>
-              <p className="text-sm mt-1">Your event is pending approval. Check your dashboard for updates.</p>
+              <p className="font-bold text-lg">Event Created Successfully!</p>
+              <p className="text-green-100 text-sm mt-1">Your event is pending approval. Check your dashboard for updates.</p>
             </div>
           </div>
         )}
 
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 space-y-8">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start">
-              <div className="mr-3 mt-0.5">⚠️</div>
-              <p>{error}</p>
-            </div>
-          )}
+        {/* Error Alert */}
+        {error && (
+          <div className="bg-gradient-to-r from-red-500 to-red-600 border-l-4 border-red-300 text-white px-6 py-4 rounded-lg mb-8 flex items-start shadow-xl">
+            <div className="mr-4 text-2xl">⚠️</div>
+            <p className="font-medium">{error}</p>
+          </div>
+        )}
 
-          {/* Event Details Section */}
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <Trophy className="w-5 h-5 mr-2 text-violet-600" />
-              Event Details
-            </h2>
+        {/* Main Form Card */}
+        <div className="bg-white rounded-2xl shadow-2xl border border-slate-200">
+          <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-10">
             
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Event Name *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
-                  placeholder="e.g., Summer Basketball Championship 2024"
-                />
+            {/* Event Basic Information */}
+            <div>
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
+                  <Trophy className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-slate-900">Event Information</h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-6">
+                {/* Event Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Date *
-                  </label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleChange}
-                    min={new Date().toISOString().split('T')[0]}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    City *
+                  <label className="block text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                    Event Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    name="city"
-                    value={formData.city}
+                    name="name"
+                    value={formData.name}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
-                    placeholder="e.g., Kathmandu"
+                    className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition font-semibold text-slate-900 placeholder-slate-400"
+                    placeholder="e.g., National Basketball Championship 2024"
+                  />
+                </div>
+
+                {/* Date and City Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                      <Calendar className="w-4 h-4 inline mr-2" />
+                      Event Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="date"
+                      value={formData.date}
+                      onChange={handleChange}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition font-semibold text-slate-900"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                      <MapPin className="w-4 h-4 inline mr-2" />
+                      City <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="city"
+                      value={formData.city}
+                      onChange={handleChange}
+                      className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition font-semibold text-slate-900"
+                    >
+                      <option value="">-- Select a City --</option>
+                      {nepalCities.map((city) => (
+                        <option key={city} value={city}>
+                          {city}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Venue */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                    Venue <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="venue"
+                    value={formData.venue}
+                    onChange={handleChange}
+                    className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition font-semibold text-slate-900 placeholder-slate-400"
+                    placeholder="e.g., Nepal Sports Arena, Hall A"
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                    Event Description <span className="text-slate-500 font-normal">(Optional)</span>
+                  </label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    rows={4}
+                    className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition font-semibold text-slate-900 placeholder-slate-400 resize-none"
+                    placeholder="Provide event details, rules, and additional information..."
                   />
                 </div>
               </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Venue *
-                </label>
-                <input
-                  type="text"
-                  name="venue"
-                  value={formData.venue}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
-                  placeholder="e.g., City Sports Complex"
-                />
+            {/* Divider */}
+            <div className="border-t-2 border-slate-200"></div>
+
+            {/* Configuration Section */}
+            <div>
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-xl">
+                  <Target className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-slate-900">Event Configuration</h2>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description (Optional)
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition resize-none"
-                  placeholder="Brief description of the tournament..."
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Gender Category */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                    <Users className="w-4 h-4 inline mr-2" />
+                    Gender Category <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleChange}
+                    className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition font-semibold text-slate-900"
+                  >
+                    <option value="Boys">Boys</option>
+                    <option value="Girls">Girls</option>
+                    <option value="Boys and Girls">Mixed</option>
+                  </select>
+                </div>
+
+                {/* Level */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                    Age Level <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="level"
+                    value={formData.level}
+                    onChange={handleChange}
+                    className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition font-semibold text-slate-900 placeholder-slate-400"
+                    placeholder="e.g., U-18, U-21, Open"
+                  />
+                </div>
+
+                {/* Format */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                    Tournament Format <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="duration_type"
+                    value={formData.duration_type}
+                    onChange={handleChange}
+                    className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition font-semibold text-slate-900"
+                  >
+                    <option value="League">League</option>
+                    <option value="Tournament">Tournament</option>
+                  </select>
+                </div>
+
+                {/* Payment */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                    <DollarSign className="w-4 h-4 inline mr-2" />
+                    Registration Fee <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="payment"
+                    value={formData.payment}
+                    onChange={handleChange}
+                    className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition font-semibold text-slate-900 placeholder-slate-400"
+                    placeholder="Type 'Free' or amount in NRs"
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Configuration Section */}
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Configuration</h2>
+            {/* Divider */}
+            <div className="border-t-2 border-slate-200"></div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Gender Category *
-                </label>
-                <select
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
-                >
-                  <option value="Boys">Boys</option>
-                  <option value="Girls">Girls</option>
-                  <option value="Boys and Girls">Mixed</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Level *
-                </label>
-                <input
-                  type="text"
-                  name="level"
-                  value={formData.level}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
-                  placeholder="e.g., Under 18"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Format *
-                </label>
-                <select
-                  name="duration_type"
-                  value={formData.duration_type}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
-                >
-                  <option value="League">League</option>
-                  <option value="Tournament">Tournament</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <DollarSign className="w-4 h-4 inline mr-1" />
-                  Registration Fee *
-                </label>
-                <input
-                  type="text"
-                  name="payment"
-                  value={formData.payment}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
-                  placeholder="'Free' or amount in NRs"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* File Uploads Section */}
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <Upload className="w-5 h-5 mr-2 text-violet-600" />
-              Event Materials
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Logo Upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Event Logo (Optional)
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-violet-500 transition cursor-pointer bg-gray-50 hover:bg-violet-50">
-                  {previews.logo ? (
-                    <div className="relative">
-                      <img src={previews.logo} alt="Logo preview" className="w-full h-32 object-cover rounded" />
-                      <button
-                        type="button"
-                        onClick={() => removeFile('logo')}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 shadow-lg"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                      <p className="text-xs text-gray-600 mt-2 text-center truncate">{files.logo.name}</p>
-                    </div>
-                  ) : (
-                    <label className="cursor-pointer block text-center">
-                      <Paperclip className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm font-medium text-gray-700 mb-1">Click to upload</p>
-                      <p className="text-xs text-gray-500">PNG, JPG, GIF, WEBP, SVG up to 5MB</p>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleFileChange(e, 'logo')}
-                        className="hidden"
-                      />
-                    </label>
-                  )}
+            {/* File Uploads Section */}
+            <div>
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl">
+                  <Upload className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">Event Materials</h2>
+                  <p className="text-sm text-slate-600 mt-1">Both files are required for submission</p>
                 </div>
               </div>
 
-              {/* Receipt Upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Venue Receipt PDF (Optional)
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-violet-500 transition cursor-pointer bg-gray-50 hover:bg-violet-50">
-                  {previews.receipt ? (
-                    <div className="relative">
-                      <div className="bg-red-50 p-3 rounded flex items-center justify-between border border-red-200">
-                        <div className="flex items-center min-w-0">
-                          <FileText className="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
-                          <p className="text-sm text-gray-700 truncate">{previews.receipt}</p>
-                        </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Logo Upload */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">
+                    Event Logo <span className="text-red-500">*</span>
+                  </label>
+                  <div className={`border-2 border-dashed rounded-xl p-8 transition-all cursor-pointer ${
+                    previews.logo 
+                      ? 'border-green-500 bg-green-50' 
+                      : 'border-slate-300 bg-slate-50 hover:border-blue-500 hover:bg-blue-50'
+                  }`}>
+                    {previews.logo ? (
+                      <div className="relative">
+                        <img src={previews.logo} alt="Logo preview" className="w-full h-40 object-cover rounded-lg border-2 border-green-300" />
                         <button
                           type="button"
-                          onClick={() => removeFile('receipt')}
-                          className="text-red-500 hover:text-red-700 ml-2 flex-shrink-0"
+                          onClick={() => removeFile('logo')}
+                          className="absolute -top-3 -right-3 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition"
                         >
                           <X className="w-5 h-5" />
                         </button>
+                        <div className="mt-3 text-center">
+                          <p className="text-xs font-bold text-green-700 uppercase">✓ File Uploaded</p>
+                          <p className="text-xs text-slate-600 mt-1 truncate">{files.logo.name}</p>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <label className="cursor-pointer block text-center">
-                      <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm font-medium text-gray-700 mb-1">Click to upload</p>
-                      <p className="text-xs text-gray-500">PDF only, up to 10MB</p>
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={(e) => handleFileChange(e, 'receipt')}
-                        className="hidden"
-                      />
-                    </label>
-                  )}
+                    ) : (
+                      <label className="cursor-pointer block text-center">
+                        <Paperclip className="w-10 h-10 text-slate-400 mx-auto mb-3" />
+                        <p className="text-sm font-bold text-slate-900 mb-1">Click to Upload Logo</p>
+                        <p className="text-xs text-slate-600">PNG, JPG, GIF, WEBP, SVG (Max 5MB)</p>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileChange(e, 'logo')}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                {/* Receipt Upload */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">
+                    Venue Receipt PDF <span className="text-red-500">*</span>
+                  </label>
+                  <div className={`border-2 border-dashed rounded-xl p-8 transition-all cursor-pointer ${
+                    previews.receipt 
+                      ? 'border-green-500 bg-green-50' 
+                      : 'border-slate-300 bg-slate-50 hover:border-blue-500 hover:bg-blue-50'
+                  }`}>
+                    {previews.receipt ? (
+                      <div className="relative">
+                        <div className="bg-gradient-to-br from-green-100 to-emerald-100 p-4 rounded-lg border-2 border-green-300 flex items-center justify-between">
+                          <div className="flex items-center min-w-0 gap-3">
+                            <FileText className="w-6 h-6 text-green-600 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-green-700 uppercase">PDF Received</p>
+                              <p className="text-sm text-slate-700 truncate font-semibold">{previews.receipt}</p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeFile('receipt')}
+                            className="text-red-500 hover:text-red-700 ml-2 flex-shrink-0 p-1 hover:bg-red-100 rounded transition"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer block text-center">
+                        <FileText className="w-10 h-10 text-slate-400 mx-auto mb-3" />
+                        <p className="text-sm font-bold text-slate-900 mb-1">Click to Upload Receipt</p>
+                        <p className="text-xs text-slate-600">PDF Only (Max 10MB)</p>
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          onChange={(e) => handleFileChange(e, 'receipt')}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Submit Button */}
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 flex items-center justify-center"
-          >
-            {loading ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Creating Event...
-              </>
-            ) : (
-              <>
-                <Trophy className="w-5 h-5 mr-2" />
-                Create Tournament Event
-              </>
-            )}
-          </button>
+              {/* Upload Status Indicator */}
+              <div className={`mt-6 p-4 rounded-lg border-2 flex items-center gap-3 ${
+                isFileUploadComplete
+                  ? 'border-green-300 bg-green-50'
+                  : 'border-yellow-300 bg-yellow-50'
+              }`}>
+                <div className={`w-3 h-3 rounded-full ${isFileUploadComplete ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                <span className={`text-sm font-semibold ${isFileUploadComplete ? 'text-green-700' : 'text-yellow-700'}`}>
+                  {isFileUploadComplete ? '✓ All files uploaded' : '⚠ Please upload all required files'}
+                </span>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t-2 border-slate-200"></div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading || !isFileUploadComplete}
+              className={`w-full font-black py-4 px-6 rounded-xl shadow-xl transition-all duration-200 flex items-center justify-center text-lg uppercase tracking-wider ${
+                loading || !isFileUploadComplete
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white hover:shadow-2xl transform hover:scale-105'
+              }`}
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-6 w-6 border-3 border-white border-t-transparent mr-3"></div>
+                  Creating Event...
+                </>
+              ) : (
+                <>
+                  <Trophy className="w-6 h-6 mr-3" />
+                  Submit Tournament Event
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* Footer Note */}
+        <div className="text-center mt-8 text-slate-400 text-sm">
+          <p>All fields marked with <span className="text-red-500 font-bold">*</span> are required for submission</p>
         </div>
       </div>
     </div>
