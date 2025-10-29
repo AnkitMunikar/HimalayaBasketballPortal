@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Calendar, Plus, Trophy, MapPin, DollarSign, Edit, Eye, UserPlus, Trash2 } from 'lucide-react';
+import { Users, Calendar, Plus, Trophy, MapPin, DollarSign, Edit, Eye, UserPlus, Trash2, User } from 'lucide-react';
 
 const API_BASE = 'http://localhost:8000/api';
 
@@ -14,46 +14,97 @@ const CoachDashboard = () => {
   const [showPlayersModal, setShowPlayersModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedTeam, setSelectedTeam] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const getAuthHeaders = () => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
     'Content-Type': 'application/json',
   });
 
-  const apiFetch = async (url, options = {}) => {
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/user/`, { 
+        headers: getAuthHeaders() 
+      });
+      if (response.ok) {
+        const userData = await response.json();
+        setCurrentUser(userData);
+        console.log('Current user:', userData);
+      }
+    } catch (err) {
+      console.error('Error fetching user:', err);
+    }
+  };
+
+  const fetchEvents = async () => {
     try {
       setLoading(true);
-      const response = await fetch(url, { ...options, headers: getAuthHeaders() });
+      setError(null);
+      const response = await fetch(`${API_BASE}/coach/events/`, { 
+        headers: getAuthHeaders() 
+      });
       if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
       const data = await response.json();
-      // Handle nested array (e.g., { events: [] }) or direct array
-      return Array.isArray(data) ? data : data.events || [];
+      console.log('Fetched events:', data);
+      setEvents(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(`Fetch error for ${url}:`, err);
-      setError('Failed to load data. Please try again.');
-      return [];
+      console.error('Error fetching events:', err);
+      setError('Failed to load events.');
+      setEvents([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchEvents = () => apiFetch(`${API_BASE}/coach/events/`).then(setEvents);
-  const fetchEnrolledTeams = () => apiFetch(`${API_BASE}/enroll/teams/`).then(setEnrolledTeams);
+  const fetchEnrolledTeams = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`${API_BASE}/enroll/teams/`, { 
+        headers: getAuthHeaders() 
+      });
+      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+      const data = await response.json();
+      console.log('Fetched enrolled teams:', data);
+      const teams = Array.isArray(data) ? data : (data.results || data.teams || []);
+      setEnrolledTeams(teams);
+    } catch (err) {
+      console.error('Error fetching enrolled teams:', err);
+      setError('Failed to load enrollments.');
+      setEnrolledTeams([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
+    fetchCurrentUser();
     fetchEvents();
     fetchEnrolledTeams();
   }, []);
 
-  const formatDate = (dateString) =>
-    new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Date TBD';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    } catch (e) {
+      return 'Invalid date';
+    }
+  };
 
-  const isUpcoming = (dateString) => new Date(dateString) >= new Date();
+  const isUpcoming = (dateString) => {
+    if (!dateString) return false;
+    try {
+      return new Date(dateString) >= new Date();
+    } catch (e) {
+      return false;
+    }
+  };
 
   const handleEnrollClick = (event) => {
     setSelectedEvent(event);
@@ -70,63 +121,100 @@ const CoachDashboard = () => {
     setShowPlayersModal(true);
   };
 
-  const handleDeleteEnrollment = async (teamId) => {
-    if (!window.confirm('Delete this enrollment? This cannot be undone.')) return;
-    try {
-      const response = await fetch(`${API_BASE}/enroll/teams/${teamId}/`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
-      if (response.ok) {
-        alert('Enrollment deleted!');
-        fetchEnrolledTeams();
-      } else {
-        alert('Failed to delete enrollment.');
-      }
-    } catch (err) {
-      alert('Network error. Try again.');
-      console.error('Delete error:', err);
-    }
-  };
-
   const EnrollmentForm = ({ event, onClose }) => {
     const [formData, setFormData] = useState({
       team_name: '',
-      coach_name: '',
       gender: 'Boys',
-      contact_number: '',
-      email: '',
     });
     const [players, setPlayers] = useState(
-      Array(8).fill().map(() => ({ player_name: '', age: '', position: 'PG', grade: '' }))
+      Array(8).fill().map(() => ({ player_name: '', age: '', position: 'PG' }))
     );
-    const [loading, setLoading] = useState(false);
+    const [formLoading, setFormLoading] = useState(false);
+    const [formError, setFormError] = useState('');
 
-    const addPlayer = () => players.length < 15 && setPlayers([...players, { player_name: '', age: '', position: 'PG', grade: '' }]);
-    const removePlayer = (index) => players.length > 8 && setPlayers(players.filter((_, i) => i !== index));
-    const updatePlayer = (index, field, value) =>
+    const addPlayer = () => {
+      if (players.length < 15) {
+        setPlayers([...players, { player_name: '', age: '', position: 'PG' }]);
+      }
+    };
+
+    const removePlayer = (index) => {
+      if (players.length > 8) {
+        setPlayers(players.filter((_, i) => i !== index));
+      }
+    };
+
+    const updatePlayer = (index, field, value) => {
       setPlayers(players.map((p, i) => (i === index ? { ...p, [field]: value } : p)));
+    };
 
     const handleSubmit = async () => {
-      setLoading(true);
+      setFormLoading(true);
+      setFormError('');
+
       try {
+        const validPlayers = players.filter((p) => p.player_name.trim() && p.age);
+        
+        if (validPlayers.length < 8) {
+          setFormError('At least 8 players are required');
+          setFormLoading(false);
+          return;
+        }
+
+        if (!formData.team_name.trim()) {
+          setFormError('Team name is required');
+          setFormLoading(false);
+          return;
+        }
+
+        const payload = {
+          team_name: formData.team_name.trim(),
+          gender: formData.gender,
+          coach_name: currentUser?.name || currentUser?.username || 'Unknown',
+          contact_number: currentUser?.phone || '',
+          email: currentUser?.email || '',
+          event: event.id,
+          players: validPlayers,
+        };
+
+        console.log('Enrolling team with payload:', payload);
+
         const response = await fetch(`${API_BASE}/enroll/teams/`, {
           method: 'POST',
           headers: getAuthHeaders(),
-          body: JSON.stringify({ ...formData, event: event.id, players: players.filter((p) => p.player_name.trim()) }),
+          body: JSON.stringify(payload),
         });
+
+        const responseData = await response.json();
+        console.log('Enrollment response:', responseData);
+
         if (response.ok) {
-          alert('Team enrolled!');
+          alert('Team enrolled successfully!');
           onClose();
-          fetchEnrolledTeams();
+          await fetchEnrolledTeams();
         } else {
-          alert(`Enrollment failed: ${await response.text()}`);
+          let errorMsg = 'Enrollment failed';
+          if (responseData.detail) {
+            errorMsg = responseData.detail;
+          } else if (responseData.non_field_errors) {
+            errorMsg = responseData.non_field_errors[0];
+          } else if (responseData.team_name) {
+            errorMsg = Array.isArray(responseData.team_name) ? responseData.team_name[0] : responseData.team_name;
+          } else {
+            const firstError = Object.entries(responseData)[0];
+            if (firstError) {
+              errorMsg = `${firstError[0]}: ${Array.isArray(firstError[1]) ? firstError[1][0] : firstError[1]}`;
+            }
+          }
+          setFormError(errorMsg);
+          console.error('Enrollment error response:', responseData);
         }
       } catch (err) {
-        alert('Network error. Try again.');
         console.error('Enrollment error:', err);
+        setFormError('Network error. Please try again.');
+      } finally {
+        setFormLoading(false);
       }
-      setLoading(false);
     };
 
     return (
@@ -138,22 +226,42 @@ const CoachDashboard = () => {
               ✕
             </button>
           </div>
+
+          {formError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
+              {formError}
+            </div>
+          )}
+
           <div className="space-y-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center mb-3">
+                <User className="w-5 h-5 text-blue-600 mr-2" />
+                <h4 className="font-semibold text-blue-900">Coach Information (Auto-filled)</h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="font-medium text-gray-600">Name:</span>
+                  <p className="text-gray-800">{currentUser?.name || currentUser?.username || 'Not set'}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-600">Email:</span>
+                  <p className="text-gray-800">{currentUser?.email || 'Not set'}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-600">Phone:</span>
+                  <p className="text-gray-800">{currentUser?.phone || 'Not set'}</p>
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input
                 type="text"
-                placeholder="Team Name"
+                placeholder="Team Name *"
                 className="p-3 border rounded-md"
                 value={formData.team_name}
                 onChange={(e) => setFormData({ ...formData, team_name: e.target.value })}
-                required
-              />
-              <input
-                type="text"
-                placeholder="Coach Name"
-                className="p-3 border rounded-md"
-                value={formData.coach_name}
-                onChange={(e) => setFormData({ ...formData, coach_name: e.target.value })}
                 required
               />
               <select
@@ -165,26 +273,11 @@ const CoachDashboard = () => {
                 <option value="Girls">Girls</option>
                 <option value="Boys and Girls">Boys and Girls</option>
               </select>
-              <input
-                type="tel"
-                placeholder="Contact Number"
-                className="p-3 border rounded-md"
-                value={formData.contact_number}
-                onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })}
-                required
-              />
-              <input
-                type="email"
-                placeholder="Email Address"
-                className="p-3 border rounded-md md:col-span-2"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
-              />
             </div>
+
             <div>
               <div className="flex justify-between mb-4">
-                <h4 className="text-lg font-semibold">Players ({players.length}/15)</h4>
+                <h4 className="text-lg font-semibold">Players ({players.length}/15) - Minimum 8 required</h4>
                 <button
                   onClick={addPlayer}
                   disabled={players.length >= 15}
@@ -196,10 +289,10 @@ const CoachDashboard = () => {
               </div>
               <div className="grid gap-4">
                 {players.map((player, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-3 p-4 border rounded-md bg-gray-50">
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 p-4 border rounded-md bg-gray-50">
                     <input
                       type="text"
-                      placeholder="Player Name"
+                      placeholder="Player Name *"
                       className="p-2 border rounded-md"
                       value={player.player_name}
                       onChange={(e) => updatePlayer(index, 'player_name', e.target.value)}
@@ -207,7 +300,7 @@ const CoachDashboard = () => {
                     />
                     <input
                       type="number"
-                      placeholder="Age"
+                      placeholder="Age *"
                       min="1"
                       max="99"
                       className="p-2 border rounded-md"
@@ -226,15 +319,11 @@ const CoachDashboard = () => {
                       <option value="PF">Power Forward</option>
                       <option value="C">Center</option>
                     </select>
-                    <input
-                      type="text"
-                      placeholder="Grade/Class"
-                      className="p-2 border rounded-md"
-                      value={player.grade}
-                      onChange={(e) => updatePlayer(index, 'grade', e.target.value)}
-                    />
                     {players.length > 8 && (
-                      <button onClick={() => removePlayer(index)} className="bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600">
+                      <button
+                        onClick={() => removePlayer(index)}
+                        className="bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     )}
@@ -242,15 +331,19 @@ const CoachDashboard = () => {
                 ))}
               </div>
             </div>
+
             <div className="flex gap-4 pt-4">
               <button
                 onClick={handleSubmit}
-                disabled={loading}
+                disabled={formLoading}
                 className="flex-1 bg-green-500 text-white py-3 px-6 rounded-md hover:bg-green-600 disabled:opacity-50"
               >
-                {loading ? 'Enrolling...' : 'Enroll Team'}
+                {formLoading ? 'Enrolling...' : 'Enroll Team'}
               </button>
-              <button onClick={onClose} className="flex-1 bg-gray-500 text-white py-3 px-6 rounded-md hover:bg-gray-600">
+              <button
+                onClick={onClose}
+                className="flex-1 bg-gray-500 text-white py-3 px-6 rounded-md hover:bg-gray-600"
+              >
                 Cancel
               </button>
             </div>
@@ -262,18 +355,40 @@ const CoachDashboard = () => {
 
   const TeamForm = ({ team, onClose }) => {
     const [players, setPlayers] = useState(
-      team?.players || Array(8).fill().map(() => ({ player_name: '', age: '', position: 'PG', grade: '' }))
+      team?.players || Array(8).fill().map(() => ({ player_name: '', age: '', position: 'PG' }))
     );
-    const [loading, setLoading] = useState(false);
+    const [formLoading, setFormLoading] = useState(false);
+    const [formError, setFormError] = useState('');
 
-    const addPlayer = () => players.length < 15 && setPlayers([...players, { player_name: '', age: '', position: 'PG', grade: '' }]);
-    const removePlayer = (index) => players.length > 8 && setPlayers(players.filter((_, i) => i !== index));
-    const updatePlayer = (index, field, value) =>
+    const addPlayer = () => {
+      if (players.length < 15) {
+        setPlayers([...players, { player_name: '', age: '', position: 'PG' }]);
+      }
+    };
+
+    const removePlayer = (index) => {
+      if (players.length > 8) {
+        setPlayers(players.filter((_, i) => i !== index));
+      }
+    };
+
+    const updatePlayer = (index, field, value) => {
       setPlayers(players.map((p, i) => (i === index ? { ...p, [field]: value } : p)));
+    };
 
     const handleSubmit = async () => {
-      setLoading(true);
+      setFormLoading(true);
+      setFormError('');
+
       try {
+        const validPlayers = players.filter((p) => p.player_name.trim() && p.age);
+        
+        if (validPlayers.length < 8) {
+          setFormError('At least 8 players are required');
+          setFormLoading(false);
+          return;
+        }
+
         const response = await fetch(`${API_BASE}/enroll/teams/${team.id}/`, {
           method: 'PUT',
           headers: getAuthHeaders(),
@@ -284,21 +399,24 @@ const CoachDashboard = () => {
             contact_number: team.contact_number || '',
             email: team.email || '',
             event: team.event,
-            players: players.filter((p) => p.player_name.trim()),
+            players: validPlayers,
           }),
         });
+
         if (response.ok) {
           alert('Players updated!');
           onClose();
           fetchEnrolledTeams();
         } else {
-          alert(`Update failed: ${await response.text()}`);
+          const errorData = await response.json();
+          setFormError(JSON.stringify(errorData));
         }
       } catch (err) {
-        alert('Network error. Try again.');
         console.error('Update error:', err);
+        setFormError('Network error. Try again.');
+      } finally {
+        setFormLoading(false);
       }
-      setLoading(false);
     };
 
     return (
@@ -310,6 +428,13 @@ const CoachDashboard = () => {
               ✕
             </button>
           </div>
+
+          {formError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
+              {formError}
+            </div>
+          )}
+
           <div className="space-y-6">
             <div className="bg-gray-50 p-4 rounded-md border">
               <h4 className="font-semibold mb-3 text-lg">Team Information</h4>
@@ -328,6 +453,7 @@ const CoachDashboard = () => {
                 </div>
               </div>
             </div>
+
             <div>
               <div className="flex justify-between mb-4">
                 <h4 className="text-lg font-semibold">Players ({players.length}/15)</h4>
@@ -342,7 +468,7 @@ const CoachDashboard = () => {
               </div>
               <div className="grid gap-4">
                 {players.map((player, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-3 p-4 border rounded-md bg-gray-50">
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 p-4 border rounded-md bg-gray-50">
                     <input
                       type="text"
                       placeholder="Player Name"
@@ -370,15 +496,11 @@ const CoachDashboard = () => {
                       <option value="PF">Power Forward</option>
                       <option value="C">Center</option>
                     </select>
-                    <input
-                      type="text"
-                      placeholder="Grade/Class"
-                      className="p-2 border rounded-md"
-                      value={player.grade}
-                      onChange={(e) => updatePlayer(index, 'grade', e.target.value)}
-                    />
                     {players.length > 8 && (
-                      <button onClick={() => removePlayer(index)} className="bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600">
+                      <button
+                        onClick={() => removePlayer(index)}
+                        className="bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     )}
@@ -386,13 +508,14 @@ const CoachDashboard = () => {
                 ))}
               </div>
             </div>
+
             <div className="flex gap-4 pt-4">
               <button
                 onClick={handleSubmit}
-                disabled={loading}
+                disabled={formLoading}
                 className="flex-1 bg-green-500 text-white py-3 px-6 rounded-md hover:bg-green-600 disabled:opacity-50"
               >
-                {loading ? 'Updating...' : 'Update Players'}
+                {formLoading ? 'Updating...' : 'Update Players'}
               </button>
               <button onClick={onClose} className="flex-1 bg-gray-500 text-white py-3 px-6 rounded-md hover:bg-gray-600">
                 Cancel
@@ -420,7 +543,7 @@ const CoachDashboard = () => {
               <div className="grid gap-4">
                 {team.players.map((player, index) => (
                   <div key={player.id || index} className="bg-gray-50 p-4 rounded-md border">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <span className="font-medium text-gray-600 block">Name:</span>
                         <p>{player.player_name}</p>
@@ -444,10 +567,6 @@ const CoachDashboard = () => {
                             ? 'Center'
                             : player.position}
                         </p>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600 block">Grade:</span>
-                        <p>{player.grade || 'Not specified'}</p>
                       </div>
                     </div>
                   </div>
@@ -520,6 +639,7 @@ const CoachDashboard = () => {
             Enrollments ({enrolledTeams.length})
           </button>
         </nav>
+
         {activeTab === 'events' && (
           <div className="bg-white rounded-lg shadow-sm border">
             <div className="px-6 py-4 border-b">
@@ -556,18 +676,16 @@ const CoachDashboard = () => {
                         </div>
                         <div className="flex items-center">
                           <MapPin className="w-4 h-4 mr-2" />
-                          {event.details?.location}
+                          {event.venue || 'Venue TBD'}, {event.city || 'City TBD'}
                         </div>
                         <div className="flex items-center">
                           <Users className="w-4 h-4 mr-2" />
-                          Max Teams: {event.max_teams}
+                          {event.gender} • {event.level}
                         </div>
-                        {event.entry_fee && (
-                          <div className="flex items-center">
-                            <DollarSign className="w-4 h-4 mr-2" />
-                            Entry Fee: ${event.entry_fee}
-                          </div>
-                        )}
+                        <div className="flex items-center">
+                          <DollarSign className="w-4 h-4 mr-2" />
+                          {event.payment === 'Free' ? 'Free Entry' : event.payment}
+                        </div>
                       </div>
                       <button
                         onClick={() => handleEnrollClick(event)}
@@ -584,6 +702,7 @@ const CoachDashboard = () => {
             </div>
           </div>
         )}
+
         {activeTab === 'enrollments' && (
           <div className="space-y-6">
             <div className="bg-white rounded-lg shadow-sm border">
@@ -598,7 +717,7 @@ const CoachDashboard = () => {
                 ) : enrolledTeams.length === 0 ? (
                   <div className="text-center py-12">
                     <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No enrollments</h3>
+                    <h3 className="text-lg font-medium mb-2">No enrollments yet</h3>
                     <button
                       onClick={() => setActiveTab('events')}
                       className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
@@ -621,17 +740,12 @@ const CoachDashboard = () => {
                           </span>
                         </div>
                         <div className="space-y-2 mb-4 text-sm text-gray-600">
-                          {/* <div className="flex items-center">
-                            <Trophy className="w-4 h-4 mr-2" />
-                            {team.event.details?.description}
-                          </div> */}
                           <div className="flex items-center">
                             <Calendar className="w-4 h-4 mr-2" />
                             {formatDate(team.event_details?.date)}
                           </div>
                           <div className="flex items-center">
                             <MapPin className="w-4 h-4 mr-2" />
-                            
                             {team.event_details?.name}
                           </div>
                           <div className="flex items-center">
@@ -660,12 +774,6 @@ const CoachDashboard = () => {
                             <Edit className="w-4 h-4 inline mr-1" />
                             Edit
                           </button>
-                          {/* <button
-                            onClick={() => handleDeleteEnrollment(team.id)}
-                            className="bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600 text-sm"
-                          >
-                            {/* <Trash2 className="w-4 h-4" /> */}
-                          {/* </button> */}
                         </div>
                       </div>
                     ))}
@@ -673,6 +781,7 @@ const CoachDashboard = () => {
                 )}
               </div>
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white rounded-lg shadow-sm border p-6">
                 <div className="flex items-center">
@@ -692,7 +801,9 @@ const CoachDashboard = () => {
                   </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Total Players</p>
-                    <p className="text-2xl font-semibold">{enrolledTeams.reduce((sum, team) => sum + (team.players?.length || 0), 0)}</p>
+                    <p className="text-2xl font-semibold">
+                      {enrolledTeams.reduce((sum, team) => sum + (team.players?.length || 0), 0)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -712,6 +823,7 @@ const CoachDashboard = () => {
             </div>
           </div>
         )}
+
         {showEnrollForm && selectedEvent && (
           <EnrollmentForm
             event={selectedEvent}

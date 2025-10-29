@@ -16,6 +16,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState('');
+  const [showVerificationMessage, setShowVerificationMessage] = useState(false); // ✨ NEW
   const router = useRouter();
 
   const handleChange = (e) => {
@@ -68,6 +69,7 @@ export default function Register() {
     
     setMessage('');
     setErrors({});
+    setShowVerificationMessage(false); // ✨ Reset
     
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
@@ -99,42 +101,60 @@ export default function Register() {
       console.log('Registration response:', data);
 
       if (response.ok) {
-        setMessage('Registration successful! Please login to continue.');
-        
-        setFormData({
-          name: '',
-          username: '',
-          email: '',
-          confirm_email: '',
-          phone: '',
-          password: '',
-          confirm_password: '',
-          role: 'player',
-        });
+        // ✨ NEW: Check if email verification is required
+        if (data.verification_required) {
+          setShowVerificationMessage(true);
+          setMessage(data.message || 'Registration successful! Please check your email to verify your account.');
+          
+          // Clear form
+          setFormData({
+            name: '',
+            username: '',
+            email: '',
+            confirm_email: '',
+            phone: '',
+            password: '',
+            confirm_password: '',
+            role: 'player',
+          });
 
-        setTimeout(() => {
-          router.push('/Login');
-        }, 2000);
+          // Don't redirect automatically - let user read the message
+        } else {
+          // Old flow (if backend doesn't require verification)
+          setMessage('Registration successful! Please login to continue.');
+          
+          setFormData({
+            name: '',
+            username: '',
+            email: '',
+            confirm_email: '',
+            phone: '',
+            password: '',
+            confirm_password: '',
+            role: 'player',
+          });
+
+          setTimeout(() => {
+            router.push('/Login');
+          }, 2000);
+        }
       } else {
-        if (data.username) {
+        // Handle errors
+        if (data.error) {
+          setMessage(data.error);
+        } else if (data.username) {
           setErrors(prev => ({ ...prev, username: data.username[0] }));
-        }
-        if (data.email) {
+        } else if (data.email) {
           setErrors(prev => ({ ...prev, email: data.email[0] }));
-        }
-        if (data.confirm_email) {
+        } else if (data.confirm_email) {
           setErrors(prev => ({ ...prev, confirm_email: data.confirm_email[0] }));
-        }
-        if (data.password) {
+        } else if (data.password) {
           setErrors(prev => ({ ...prev, password: data.password[0] }));
-        }
-        if (data.confirm_password) {
+        } else if (data.confirm_password) {
           setErrors(prev => ({ ...prev, confirm_password: data.confirm_password[0] }));
-        }
-        if (data.role) {
+        } else if (data.role) {
           setErrors(prev => ({ ...prev, role: data.role[0] }));
-        }
-        if (data.non_field_errors) {
+        } else if (data.non_field_errors) {
           setMessage(data.non_field_errors[0]);
         } else if (data.detail) {
           setMessage(data.detail);
@@ -157,13 +177,45 @@ export default function Register() {
           
           {/* Left Side - Form */}
           <div className="order-2 lg:order-1">
-            <div className="bg-white/10 ">
+            <div className="bg-white/10">
               <div className="mb-8">
                 <h1 className="text-3xl lg:text-4xl font-semibold text-gray-900 mb-2">Create Account</h1>
                 <p className="text-gray-700">Join our basketball community today</p>
               </div>
 
-              {message && (
+              {/* ✨ NEW: Email Verification Success Message */}
+              {showVerificationMessage && (
+                <div className="mb-6 p-6 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200">
+                  <div className="flex items-start space-x-3">
+                    <svg className="w-6 h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-green-900 mb-2">Check Your Email! 📧</h3>
+                      <p className="text-green-800 text-sm leading-relaxed mb-3">
+                        We've sent a verification link to <strong>{formData.email || 'your email'}</strong>
+                      </p>
+                      <div className="bg-white/60 p-3 rounded border border-green-300 mb-3">
+                        <p className="text-sm text-gray-700 font-medium mb-2">Next steps:</p>
+                        <ol className="text-sm text-gray-700 space-y-1 list-decimal list-inside">
+                          <li>Check your inbox (and spam folder)</li>
+                          <li>Click the verification link in the email</li>
+                          <li>Come back and login!</li>
+                        </ol>
+                      </div>
+                      <button
+                        onClick={() => router.push('/Login')}
+                        className="text-sm text-green-700 hover:text-green-800 font-medium underline"
+                      >
+                        Go to Login Page →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Regular Message */}
+              {message && !showVerificationMessage && (
                 <div className={`mb-6 p-4 rounded-lg text-sm ${
                   message.includes('successful') 
                     ? 'bg-green-50 text-green-800 border border-green-200' 

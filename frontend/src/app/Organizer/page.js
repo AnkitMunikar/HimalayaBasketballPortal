@@ -31,7 +31,7 @@ export default function Organizer() {
   return (
     <main className="min-h-screen flex flex-col bg-gray-50">
       <Header />
-      <EventForm/>
+      {/* <EventForm/> */}
       <div className="mt-24">
         <OrganizerDashboard />
       </div>
