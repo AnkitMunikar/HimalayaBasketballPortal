@@ -5,8 +5,18 @@ from events.serializers import EventSerializer
 class PlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
-        fields = ['id', 'player_name', 'age', 'position', 'created_at']
+        fields = ['id', 'player_name', 'age', 'position', 'grade', 'created_at']
         read_only_fields = ['id', 'created_at']
+
+    def validate_age(self, value):
+        """Ensure age is a valid integer"""
+        try:
+            age = int(value)
+            if age < 1 or age > 99:
+                raise serializers.ValidationError("Age must be between 1 and 99")
+            return age
+        except (ValueError, TypeError):
+            raise serializers.ValidationError("Age must be a valid number")
 
 class EnrollSerializer(serializers.ModelSerializer):
     players = PlayerSerializer(many=True, required=False)  # Make players optional

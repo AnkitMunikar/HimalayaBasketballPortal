@@ -50,6 +50,14 @@ class Event(models.Model):
         help_text='Enter amount in NRs or type "Free"',
         default='Free'
     )
+    logo = models.ImageField(
+        upload_to='event_logos/', 
+        blank=True, null=True,
+          help_text="Event logo image")
+    venue_receipt = models.FileField(
+        upload_to='venue_receipts/', 
+        blank=True, null=True, 
+         help_text="Upload venue rental receipt for confirmation")
     
     # Updated approval system
     approval_status = models.CharField(

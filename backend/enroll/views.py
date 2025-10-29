@@ -40,20 +40,28 @@ class EnrollViews(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
+        logger.info(f"perform_create called for user: {user.username}, role: {user.role}")
+        logger.info(f"Validated data: {serializer.validated_data}")
         
         if user.role == 'coach':
+            logger.info(f"Coach {user.username} attempting to enroll team")
             coach_team = user.team_set.first()
             if not coach_team:
+                logger.warning(f"Coach {user.username} has no team assigned")
                 return Response(
                     {"detail": "No team assigned to this coach."}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             serializer.save(coach_name=user.name, team=coach_team)
+            logger.info(f"Team enrollment created for coach {user.username}")
             
         elif user.role == 'event_organizer':
+            logger.info(f"Event organizer {user.username} attempting to enroll team")
             serializer.save(coach_name=user.name)
+            logger.info(f"Team enrollment created for organizer {user.username}")
             
         else:
+            logger.warning(f"Unauthorized user {user.username} with role {user.role} attempted enrollment")
             return Response(
                 {"detail": "Not authorized to create team enrollment."}, 
                 status=status.HTTP_403_FORBIDDEN
