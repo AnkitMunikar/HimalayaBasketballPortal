@@ -713,7 +713,7 @@ const OrganizerDashboard = () => {
           </div>
         )}
       </div>
-
+      
       {/* Modals */}
       {showEventForm && (
         <EventForm event={editingEvent} onClose={() => setShowEventForm(false)} />
@@ -731,5 +731,6 @@ const OrganizerDashboard = () => {
     </div>
   );
 };
+
 
 export default OrganizerDashboard;

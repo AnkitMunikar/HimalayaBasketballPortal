@@ -5,7 +5,7 @@ from events.serializers import EventSerializer
 class PlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
-        fields = ['id', 'player_name', 'age', 'position', 'grade', 'created_at']
+        fields = ['id', 'player_name', 'age', 'position', 'created_at']
         read_only_fields = ['id', 'created_at']
 
     def validate_age(self, value):
@@ -40,14 +40,33 @@ class EnrollSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
+        """
+        ✅ UPDATED: Only check for duplicate coach enrollment per event
+        Players CAN be reused across different events (local system feature)
+        """
         event = data.get('event')
-        team_name = data.get('team_name')
         
+        # Get the current user from context
+        request = self.context.get('request')
+        user = request.user if request else None
+        
+        # Don't validate on update, only on create
         if self.instance:
             return data
+        
+        # ✅ ONLY CHECK: Same coach cannot enroll multiple teams for same event
+        if user and hasattr(user, 'name'):
+            existing_enrollment = TeamEnroll.objects.filter(
+                event=event,
+                coach_name=user.name
+            ).first()
             
-        if TeamEnroll.objects.filter(event=event, team_name=team_name).exists():
-            raise serializers.ValidationError("This team is already enrolled in this event.")
+            if existing_enrollment:
+                raise serializers.ValidationError(
+                    f"You have already enrolled a team ({existing_enrollment.team_name}) for this event. "
+                    f"A coach can only enroll one team per event. "
+                    f"You can use the same players for different events though!"
+                )
         
         return data
 

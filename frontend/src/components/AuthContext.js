@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }) => {
       // Redirect by role
       setTimeout(() => {
         if (userData.role === 'event_organizer') router.push('/Organizer');
-        else if (userData.role === 'coach') router.push('/coach');
+        else if (userData.role === 'coach') router.push('/Coach');
         else if (userData.role === 'player') router.push('/player');
         else router.push('/');
       }, 100);

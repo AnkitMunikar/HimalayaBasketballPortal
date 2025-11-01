@@ -1,7 +1,7 @@
-# backend/enroll/views.py
 from rest_framework import viewsets, generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from accounts.permissions import IsCoach, IsEventOrganizer
 from .models import TeamEnroll, Player
 from .serializers import EnrollSerializer, PlayerSerializer, PublicEnrollSerializer
@@ -17,7 +17,7 @@ class EnrollViews(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        today = date.today()  # Add date filtering
+        today = date.today()
         
         if not user.is_authenticated:
             return TeamEnroll.objects.none()
@@ -38,34 +38,58 @@ class EnrollViews(viewsets.ModelViewSet):
             
         return TeamEnroll.objects.none()
 
+    def get_serializer_context(self):
+        """
+        ✅ NEW: Pass request to serializer context
+        This allows the serializer to access the user for duplicate checking
+        """
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
     def perform_create(self, serializer):
+        """
+        Handle enrollment creation with proper error handling
+        """
         user = self.request.user
         logger.info(f"perform_create called for user: {user.username}, role: {user.role}")
         logger.info(f"Validated data: {serializer.validated_data}")
         
-        if user.role == 'coach':
-            logger.info(f"Coach {user.username} attempting to enroll team")
-            coach_team = user.team_set.first()
-            if not coach_team:
-                logger.warning(f"Coach {user.username} has no team assigned")
-                return Response(
-                    {"detail": "No team assigned to this coach."}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            serializer.save(coach_name=user.name, team=coach_team)
-            logger.info(f"Team enrollment created for coach {user.username}")
-            
-        elif user.role == 'event_organizer':
-            logger.info(f"Event organizer {user.username} attempting to enroll team")
-            serializer.save(coach_name=user.name)
-            logger.info(f"Team enrollment created for organizer {user.username}")
-            
-        else:
-            logger.warning(f"Unauthorized user {user.username} with role {user.role} attempted enrollment")
-            return Response(
-                {"detail": "Not authorized to create team enrollment."}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
+        try:
+            if user.role == 'coach':
+                logger.info(f"Coach {user.username} attempting to enroll team")
+                
+                # Get coach's team if exists (optional, not required)
+                coach_team = user.team_set.first()
+                
+                # Save enrollment with coach_name and team (if exists)
+                enrollment_data = {'coach_name': user.name}
+                if coach_team:
+                    enrollment_data['team'] = coach_team
+                    logger.info(f"Coach {user.username} has team: {coach_team.name}")
+                else:
+                    logger.info(f"Coach {user.username} has no team assigned (it's optional)")
+                
+                serializer.save(**enrollment_data)
+                logger.info(f"✅ Team enrollment created successfully for coach {user.username}")
+                
+            elif user.role == 'event_organizer':
+                logger.info(f"Event organizer {user.username} attempting to enroll team")
+                serializer.save(coach_name=user.name)
+                logger.info(f"✅ Team enrollment created successfully for organizer {user.username}")
+                
+            else:
+                error_msg = f"Unauthorized user {user.username} with role {user.role} attempted enrollment"
+                logger.warning(error_msg)
+                raise ValidationError("Not authorized to create team enrollment.")
+                
+        except ValidationError as ve:
+            logger.error(f"Validation error in perform_create: {str(ve)}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error in perform_create: {str(e)}", exc_info=True)
+            raise
+
 
 class PlayerViews(viewsets.ModelViewSet):
     queryset = Player.objects.all()
@@ -87,7 +111,7 @@ class EventTeamsListView(generics.ListAPIView):
             event = Event.objects.get(
                 id=event_id, 
                 approval_status='approved',
-                date__gte=today  # KEY CHANGE: Only upcoming events
+                date__gte=today
             )
             return TeamEnroll.objects.filter(event=event).select_related('event', 'team')
         except Event.DoesNotExist:
@@ -166,7 +190,7 @@ class EventTeamDelete(generics.DestroyAPIView):
             event = Event.objects.get(
                 id=event_id, 
                 approval_status='approved',
-                date__gte=today  # KEY CHANGE: Only upcoming events
+                date__gte=today
             )
             return TeamEnroll.objects.filter(event=event)
         except Event.DoesNotExist:

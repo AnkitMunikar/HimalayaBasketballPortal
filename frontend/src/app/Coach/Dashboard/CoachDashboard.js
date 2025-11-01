@@ -15,24 +15,48 @@ const CoachDashboard = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState('all');
 
-  const getAuthHeaders = () => ({
-    Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-    'Content-Type': 'application/json',
-  });
+  // ✅ IMPROVED: Better token handling
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      console.warn('⚠️ No access token found in localStorage');
+      setError('Authentication required. Please login first.');
+    }
+    console.log('🔐 Using token:', token ? `${token.substring(0, 10)}...` : 'NONE');
+    
+    return {
+      Authorization: `Bearer ${token || ''}`,
+      'Content-Type': 'application/json',
+    };
+  };
 
   const fetchCurrentUser = async () => {
     try {
+      console.log('📥 Fetching current user...');
       const response = await fetch(`${API_BASE}/user/`, { 
         headers: getAuthHeaders() 
       });
+      
+      if (response.status === 401) {
+        console.error('❌ Unauthorized - Token might be expired');
+        setError('Session expired. Please login again.');
+        return;
+      }
+      
       if (response.ok) {
         const userData = await response.json();
         setCurrentUser(userData);
-        console.log('Current user:', userData);
+        console.log('✅ Current user:', userData);
+      } else {
+        console.error('❌ Failed to fetch user:', response.status);
       }
     } catch (err) {
-      console.error('Error fetching user:', err);
+      console.error('❌ Error fetching user:', err);
     }
   };
 
@@ -40,16 +64,26 @@ const CoachDashboard = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_BASE}/coach/events/`, { 
+      console.log('📥 Fetching events from:', `${API_BASE}/events/list/`);
+      
+      const response = await fetch(`${API_BASE}/events/list/`, { 
         headers: getAuthHeaders() 
       });
-      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+      
+      console.log('📊 Events response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Events fetch error:', response.status, errorText.substring(0, 200));
+        throw new Error(`HTTP error: ${response.status}`);
+      }
+      
       const data = await response.json();
-      console.log('Fetched events:', data);
+      console.log('✅ Fetched events:', data);
       setEvents(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('Error fetching events:', err);
-      setError('Failed to load events.');
+      console.error('❌ Error fetching events:', err);
+      setError('Failed to load events. Check console for details.');
       setEvents([]);
     } finally {
       setLoading(false);
@@ -60,17 +94,27 @@ const CoachDashboard = () => {
     try {
       setLoading(true);
       setError(null);
+      console.log('📥 Fetching enrolled teams from:', `${API_BASE}/enroll/teams/`);
+      
       const response = await fetch(`${API_BASE}/enroll/teams/`, { 
         headers: getAuthHeaders() 
       });
-      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+      
+      console.log('📊 Teams response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Teams fetch error:', response.status, errorText.substring(0, 200));
+        throw new Error(`HTTP error: ${response.status}`);
+      }
+      
       const data = await response.json();
-      console.log('Fetched enrolled teams:', data);
+      console.log('✅ Fetched enrolled teams:', data);
       const teams = Array.isArray(data) ? data : (data.results || data.teams || []);
       setEnrolledTeams(teams);
     } catch (err) {
-      console.error('Error fetching enrolled teams:', err);
-      setError('Failed to load enrollments.');
+      console.error('❌ Error fetching enrolled teams:', err);
+      setError('Failed to load enrollments. Check console for details.');
       setEnrolledTeams([]);
     } finally {
       setLoading(false);
@@ -78,6 +122,7 @@ const CoachDashboard = () => {
   };
 
   useEffect(() => {
+    console.log('🚀 CoachDashboard mounted - fetching data...');
     fetchCurrentUser();
     fetchEvents();
     fetchEnrolledTeams();
@@ -100,7 +145,11 @@ const CoachDashboard = () => {
   const isUpcoming = (dateString) => {
     if (!dateString) return false;
     try {
-      return new Date(dateString) >= new Date();
+      const eventDate = new Date(dateString);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      eventDate.setHours(0, 0, 0, 0);
+      return eventDate >= today;
     } catch (e) {
       return false;
     }
@@ -120,6 +169,50 @@ const CoachDashboard = () => {
     setSelectedTeam(team);
     setShowPlayersModal(true);
   };
+
+  // ✅ FILTERED EVENTS FOR DISPLAY
+  const filteredEvents = React.useMemo(() => {
+    if (!Array.isArray(events)) {
+      console.warn('Events is not an array:', events);
+      return [];
+    }
+
+    return events.filter(event => {
+      if (!event || typeof event !== 'object') {
+        console.warn('Invalid event object:', event);
+        return false;
+      }
+
+      if (!event.name || !event.venue) {
+        console.warn('Event missing required properties:', event);
+        return false;
+      }
+
+      try {
+        const matchesSearch = event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                             event.venue.toLowerCase().includes(searchTerm.toLowerCase());
+
+        if (filter === 'all') return matchesSearch;
+        
+        if (filter === 'upcoming') {
+          return matchesSearch;
+        }
+        
+        if (filter === 'tournament') {
+          return event.duration_type === 'Tournament' && matchesSearch;
+        }
+        
+        if (filter === 'league') {
+          return event.duration_type === 'League' && matchesSearch;
+        }
+
+        return matchesSearch;
+      } catch (filterError) {
+        console.error('Error filtering event:', event, filterError);
+        return false;
+      }
+    });
+  }, [events, filter, searchTerm]);
 
   const EnrollmentForm = ({ event, onClose }) => {
     const [formData, setFormData] = useState({
@@ -167,17 +260,6 @@ const CoachDashboard = () => {
           return;
         }
 
-        // Check if team is already enrolled in this event
-        const alreadyEnrolled = enrolledTeams.some(
-          team => team.team_name === formData.team_name.trim() && team.event === event.id
-        );
-
-        if (alreadyEnrolled) {
-          setFormError('This team is already enrolled in this event. Duplicate enrollments are not allowed.');
-          setFormLoading(false);
-          return;
-        }
-
         const payload = {
           team_name: formData.team_name.trim(),
           gender: formData.gender,
@@ -188,7 +270,7 @@ const CoachDashboard = () => {
           players: validPlayers,
         };
 
-        console.log('Enrolling team with payload:', payload);
+        console.log('📤 Sending enrollment payload:', payload);
 
         const response = await fetch(`${API_BASE}/enroll/teams/`, {
           method: 'POST',
@@ -196,17 +278,31 @@ const CoachDashboard = () => {
           body: JSON.stringify(payload),
         });
 
-        const responseData = await response.json();
-        console.log('Enrollment response:', responseData);
+        console.log('📊 Enrollment response status:', response.status);
+
+        const contentType = response.headers.get('content-type');
+        let responseData;
+
+        if (contentType?.includes('application/json')) {
+          responseData = await response.json();
+          console.log('✅ Enrollment response (JSON):', responseData);
+        } else {
+          const errorText = await response.text();
+          console.error('❌ Non-JSON response:', errorText.substring(0, 500));
+          responseData = { error: `Server error (${response.status}): ${errorText.substring(0, 100)}...` };
+        }
 
         if (response.ok) {
-          alert('Team enrolled successfully!');
+          alert('✅ Team enrolled successfully!');
           onClose();
           await fetchEnrolledTeams();
         } else {
           let errorMsg = 'Enrollment failed';
+          
           if (responseData.detail) {
             errorMsg = responseData.detail;
+          } else if (responseData.error) {
+            errorMsg = responseData.error;
           } else if (responseData.non_field_errors) {
             errorMsg = responseData.non_field_errors[0];
           } else if (responseData.team_name) {
@@ -217,12 +313,13 @@ const CoachDashboard = () => {
               errorMsg = `${firstError[0]}: ${Array.isArray(firstError[1]) ? firstError[1][0] : firstError[1]}`;
             }
           }
+          
           setFormError(errorMsg);
-          console.error('Enrollment error response:', responseData);
+          console.error('❌ Enrollment error response:', responseData);
         }
       } catch (err) {
-        console.error('Enrollment error:', err);
-        setFormError('Network error. Please try again.');
+        console.error('❌ Enrollment network error:', err);
+        setFormError('Network error. Check console and ensure backend is running.');
       } finally {
         setFormLoading(false);
       }
@@ -240,7 +337,7 @@ const CoachDashboard = () => {
 
           {formError && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
-              {formError}
+              <strong>Error:</strong> {formError}
             </div>
           )}
 
@@ -415,15 +512,24 @@ const CoachDashboard = () => {
         });
 
         if (response.ok) {
-          alert('Players updated!');
+          alert('✅ Players updated!');
           onClose();
           fetchEnrolledTeams();
         } else {
-          const errorData = await response.json();
+          const contentType = response.headers.get('content-type');
+          let errorData;
+          
+          if (contentType?.includes('application/json')) {
+            errorData = await response.json();
+          } else {
+            const errorText = await response.text();
+            errorData = { error: errorText.substring(0, 200) };
+          }
+          
           setFormError(JSON.stringify(errorData));
         }
       } catch (err) {
-        console.error('Update error:', err);
+        console.error('❌ Update error:', err);
         setFormError('Network error. Try again.');
       } finally {
         setFormLoading(false);
@@ -442,7 +548,7 @@ const CoachDashboard = () => {
 
           {formError && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
-              {formError}
+              <strong>Error:</strong> {formError}
             </div>
           )}
 
@@ -657,18 +763,64 @@ const CoachDashboard = () => {
               <h2 className="text-lg font-semibold">Available Events</h2>
             </div>
             <div className="p-6">
+              {/* ✅ Search & Filter Section */}
+              <div className="mb-8 space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                  <div className="relative flex-1 max-w-md">
+                    <input
+                      type="text"
+                      placeholder="Search events..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-4 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { key: 'all', label: 'All Events' },
+                      { key: 'upcoming', label: 'Upcoming' },
+                      { key: 'tournament', label: 'Tournaments' },
+                      { key: 'league', label: 'Leagues' }
+                    ].map(({ key, label }) => (
+                      <button
+                        key={key}
+                        onClick={() => setFilter(key)}
+                        className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                          filter === key
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="text-center text-gray-600 text-sm">
+                  {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''} found
+                </div>
+              </div>
+
+              {/* ✅ Events Display */}
               {loading ? (
                 <p className="text-center py-12 text-gray-600">Loading...</p>
               ) : error ? (
-                <p className="text-center py-12 text-red-600">{error}</p>
-              ) : events.length === 0 ? (
+                <p className="text-center py-12 text-red-600">⚠️ {error}</p>
+              ) : filteredEvents.length === 0 ? (
                 <div className="text-center py-12">
                   <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No events available</h3>
+                  <h3 className="text-lg font-medium mb-2">No events found</h3>
+                  <p className="text-gray-600">
+                    {searchTerm || filter !== 'all' 
+                      ? 'Try adjusting your search or filters.' 
+                      : 'Check back soon for upcoming tournaments and events.'}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {events.map((event) => (
+                  {filteredEvents.map((event) => (
                     <div
                       key={event.id}
                       className="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow duration-300"
@@ -721,7 +873,7 @@ const CoachDashboard = () => {
                             <span className="truncate">
                               {event.payment === 'Free' || !event.payment 
                                 ? 'Free Entry' 
-                                : `${event.payment}`}
+                                : `Rs. ${event.payment}`}
                             </span>
                           </div>
                         </div>
@@ -755,7 +907,7 @@ const CoachDashboard = () => {
                 {loading ? (
                   <p className="text-center py-12 text-gray-600">Loading...</p>
                 ) : error ? (
-                  <p className="text-center py-12 text-red-600">{error}</p>
+                  <p className="text-center py-12 text-red-600">⚠️ {error}</p>
                 ) : enrolledTeams.length === 0 ? (
                   <div className="text-center py-12">
                     <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
