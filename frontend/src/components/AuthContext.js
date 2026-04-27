@@ -1,3 +1,4 @@
+// frontend/src/components/AuthContext.js
 'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -52,8 +53,14 @@ export const AuthProvider = ({ children }) => {
       const userData = data.user || {
         username: credentials.username,
         role: data.role || 'unknown',
-        id: data.id || null, // in case backend doesn’t send full user object
+        id: data.id || null, // in case backend doesn't send full user object
+        is_superuser: data.user?.is_superuser || false,
       };
+
+      // Ensure is_superuser is included
+      if (data.user?.is_superuser !== undefined) {
+        userData.is_superuser = data.user.is_superuser;
+      }
 
       if (!userData.role) {
         console.warn('No role provided in login response, defaulting to "unknown"');
@@ -61,10 +68,16 @@ export const AuthProvider = ({ children }) => {
       }
 
       // Normalize role
-      const roleLower = userData.role.toLowerCase();
+      const roleLower = userData.role ? userData.role.toLowerCase() : '';
       if (roleLower === 'organizer') userData.role = 'event_organizer';
       if (roleLower === 'coach') userData.role = 'coach';
       if (roleLower === 'player') userData.role = 'player';
+      
+      // Check if user is superuser (admin) - override role to admin
+      if (userData.is_superuser) {
+        userData.role = 'admin';
+        console.log('Superuser detected, setting role to admin');
+      }
 
       // ✅ Store tokens + user info
       localStorage.setItem('access_token', data.access);
@@ -85,7 +98,8 @@ export const AuthProvider = ({ children }) => {
       setTimeout(() => {
         if (userData.role === 'event_organizer') router.push('/Organizer');
         else if (userData.role === 'coach') router.push('/Coach');
-        else if (userData.role === 'player') router.push('/player');
+        else if (userData.role === 'player') router.push('/Player');
+        else if (userData.role === 'admin') router.push('/Admin');
         else router.push('/');
       }, 100);
 
@@ -137,7 +151,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_data');
     setUser(null);
-    router.push('/login');
+    router.push('/Login');
   };
 
   return (

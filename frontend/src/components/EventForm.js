@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Calendar, MapPin, Users, Clock, DollarSign, Trophy } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, Trophy } from 'lucide-react';
 
 export default function EventForm({ onEventSubmitted }) {
   const { user } = useAuth();
@@ -24,7 +24,7 @@ export default function EventForm({ onEventSubmitted }) {
   useEffect(() => {
     if (!user) {
       setError('Please login to continue');
-      setTimeout(() => router.push('/login'), 2000);
+      setTimeout(() => router.push('/Login'), 2000);
       return;
     }
     
@@ -180,7 +180,7 @@ export default function EventForm({ onEventSubmitted }) {
         {/* Header */}
         <div className="text-center mb-8">
           <Trophy className="w-16 h-16 text-violet-600 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create New Tournament Event</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2 font-fjalla-one">Create New Tournament Event</h1>
           <p className="text-gray-600">Welcome, {user.name || user.username}! Create your next basketball tournament.</p>
         </div>
 
@@ -341,7 +341,7 @@ export default function EventForm({ onEventSubmitted }) {
 
             <div>
               <label htmlFor="payment" className="flex items-center mb-2 font-medium text-gray-700">
-                <DollarSign className="w-4 h-4 mr-2 text-violet-600" />
+                <span className="font-semibold text-violet-600 mr-2">Rs.</span>
                 Registration Fee *
               </label>
               <input

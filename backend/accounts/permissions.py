@@ -12,6 +12,12 @@ class IsCoach(BasePermission):
 class IsPlayer(BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.role == 'player'
+
+class IsAdmin(BasePermission):
+    """Allow only superusers or users with admin role"""
+    def has_permission(self, request, view):
+        return (request.user.is_authenticated and 
+                (request.user.is_superuser or request.user.role == 'admin'))
     
 # class IsCoachOrEventOrganizer(BasePermission):
 #     """Allow both coaches and event organizers to access"""

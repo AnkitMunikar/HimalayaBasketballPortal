@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, DollarSign, Trophy, Upload, X, FileText, Paperclip, MapPin, Users, Target } from 'lucide-react';
+import { Calendar, Trophy, Upload, X, FileText, Paperclip, MapPin, Users, Target, Hash } from 'lucide-react';
 
 export default function EventForm({ onEventSubmitted }) {
   const nepalCities = [
@@ -30,6 +30,7 @@ export default function EventForm({ onEventSubmitted }) {
   const [formData, setFormData] = useState({
     name: '',
     date: '',
+    end_date: '',
     venue: '',
     city: '',
     description: '',
@@ -37,6 +38,7 @@ export default function EventForm({ onEventSubmitted }) {
     level: '',
     duration_type: 'League',
     payment: '',
+    max_teams: '16',
   });
   
   const [files, setFiles] = useState({
@@ -136,6 +138,14 @@ export default function EventForm({ onEventSubmitted }) {
       setError("Payment must be a number or the word 'Free'");
       return false;
     }
+    
+    // ✨ NEW: Validate max_teams
+    const maxTeamsValue = parseInt(formData.max_teams);
+    if (isNaN(maxTeamsValue) || maxTeamsValue < 0 || maxTeamsValue > 100) {
+      setError('Max teams must be between 0 and 100 (0 = unlimited)');
+      return false;
+    }
+    
     if (!files.logo) {
       setError('Event logo is required');
       return false;
@@ -180,7 +190,7 @@ export default function EventForm({ onEventSubmitted }) {
         throw new Error('User ID not found. Please login again.');
       }
 
-      // Step 1: Create event with basic data
+      // Step 1: Create event with basic data including max_teams
       const eventPayload = {
         name: formData.name.trim(),
         date: formData.date,
@@ -191,8 +201,12 @@ export default function EventForm({ onEventSubmitted }) {
         level: formData.level.trim(),
         duration_type: formData.duration_type,
         payment: formData.payment.toLowerCase() === 'free' ? 'Free' : formData.payment,
+        max_teams: parseInt(formData.max_teams),
         organizer: organizerId,
       };
+      if (formData.end_date && formData.end_date.trim()) {
+        eventPayload.end_date = formData.end_date;
+      }
 
       const response = await fetch(`http://127.0.0.1:8000/api/events/create/`, {
         method: 'POST',
@@ -258,6 +272,7 @@ export default function EventForm({ onEventSubmitted }) {
       setFormData({
         name: '',
         date: '',
+        end_date: '',
         venue: '',
         city: '',
         description: '',
@@ -265,6 +280,7 @@ export default function EventForm({ onEventSubmitted }) {
         level: '',
         duration_type: 'League',
         payment: '',
+        max_teams: '16',
       });
       setFiles({ logo: null, receipt: null });
       setPreviews({ logo: null, receipt: null });
@@ -285,7 +301,7 @@ export default function EventForm({ onEventSubmitted }) {
   const isFileUploadComplete = files.logo && files.receipt;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 pt-24 pb-12 px-4">
       <div className="max-w-5xl mx-auto">
         {/* Header Section - NBA Style */}
         <div className="text-center mb-12">
@@ -294,7 +310,7 @@ export default function EventForm({ onEventSubmitted }) {
             <Trophy className="w-12 h-12 text-yellow-400 drop-shadow-lg" />
             <div className="h-1 w-12 bg-gradient-to-l from-blue-500 to-transparent"></div>
           </div>
-          <h1 className="text-5xl font-black text-white mb-3 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl lg:text-5xl font-black text-white mb-3 tracking-tight font-fjalla-one">
             HIMALAYA BASKETBALL PORTAL
             <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 mt-1">
               FORM REGISTRATION
@@ -324,7 +340,7 @@ export default function EventForm({ onEventSubmitted }) {
 
         {/* Main Form Card */}
         <div className="bg-white rounded-2xl shadow-2xl border border-slate-200">
-          <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-10">
+          <form onSubmit={handleSubmit} className="p-4 sm:p-6 md:p-8 lg:p-12 space-y-6 sm:space-y-8 lg:space-y-10">
             
             {/* Event Basic Information */}
             <div>
@@ -351,8 +367,8 @@ export default function EventForm({ onEventSubmitted }) {
                   />
                 </div>
 
-                {/* Date and City Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Date, End Date, City Row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
                       <Calendar className="w-4 h-4 inline mr-2" />
@@ -367,7 +383,20 @@ export default function EventForm({ onEventSubmitted }) {
                       className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition font-semibold text-slate-900"
                     />
                   </div>
-
+                  <div>
+                    <label className="block text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                      End Date <span className="text-slate-500 font-normal">(Optional)</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="end_date"
+                      value={formData.end_date}
+                      onChange={handleChange}
+                      min={formData.date || new Date().toISOString().split('T')[0]}
+                      className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition font-semibold text-slate-900"
+                      placeholder="Multi-day tournament"
+                    />
+                  </div>
                   <div>
                     <label className="block text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
                       <MapPin className="w-4 h-4 inline mr-2" />
@@ -430,7 +459,7 @@ export default function EventForm({ onEventSubmitted }) {
                 <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-xl">
                   <Target className="w-6 h-6 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-slate-900">Event Configuration</h2>
+                <h2 className="text-2xl font-bold text-slate-900 font-fjalla-one">Event Configuration</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -486,7 +515,7 @@ export default function EventForm({ onEventSubmitted }) {
                 {/* Payment */}
                 <div>
                   <label className="block text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
-                    <DollarSign className="w-4 h-4 inline mr-2" />
+                    <span className="font-semibold text-slate-700 mr-2">Rs.</span>
                     Registration Fee <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -497,6 +526,75 @@ export default function EventForm({ onEventSubmitted }) {
                     className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition font-semibold text-slate-900 placeholder-slate-400"
                     placeholder="Type 'Free' or amount in NRs"
                   />
+                </div>
+
+                {/* ✨ NEW: Max Teams Field */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                    <Hash className="w-4 h-4 inline mr-2" />
+                    Maximum Teams <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      name="max_teams"
+                      value={formData.max_teams}
+                      onChange={handleChange}
+                      min="0"
+                      max="100"
+                      className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition font-semibold text-slate-900 placeholder-slate-400"
+                      placeholder="Maximum number of teams (0 for unlimited)"
+                    />
+                    <div className="mt-2 flex items-start gap-2">
+                      <div className="w-1 h-1 bg-slate-400 rounded-full mt-2"></div>
+                      <p className="text-xs text-slate-600">
+                        Set the maximum number of teams that can enroll in this event. 
+                        Enter <span className="font-bold">0</span> for unlimited enrollment or a number between <span className="font-bold">1-100</span>.
+                        <span className="block mt-1 text-slate-500">
+                          {formData.max_teams === '0' 
+                            ? '📢 Currently set to: Unlimited teams can enroll' 
+                            : `📢 Currently set to: Maximum ${formData.max_teams} team${formData.max_teams === '1' ? '' : 's'} can enroll`}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Visual indicator for team limit */}
+                  {formData.max_teams && formData.max_teams !== '0' && (
+                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0">
+                          <Users className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-sm font-semibold text-blue-900">
+                            Team Capacity: {formData.max_teams} teams
+                          </div>
+                          <div className="text-xs text-blue-700 mt-1">
+                            Once {formData.max_teams} teams have enrolled, no additional registrations will be accepted.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {formData.max_teams === '0' && (
+                    <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0">
+                          <Users className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-sm font-semibold text-green-900">
+                            Unlimited Enrollment
+                          </div>
+                          <div className="text-xs text-green-700 mt-1">
+                            No limit on the number of teams that can register for this event.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -511,7 +609,7 @@ export default function EventForm({ onEventSubmitted }) {
                   <Upload className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900">Event Materials</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 font-fjalla-one">Event Materials</h2>
                   <p className="text-sm text-slate-600 mt-1">Both files are required for submission</p>
                 </div>
               </div>

@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { validatePassword, PASSWORD_REQUIREMENTS } from '@/utils/passwordValidation';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -49,9 +50,8 @@ export default function Register() {
       newErrors.confirm_email = 'Emails do not match';
     }
 
-    if (formData.password && formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters long';
-    }
+    const passwordError = formData.password ? validatePassword(formData.password) : null;
+    if (passwordError) newErrors.password = passwordError;
 
     if (formData.password && formData.confirm_password && formData.password !== formData.confirm_password) {
       newErrors.confirm_password = 'Passwords do not match';
@@ -179,7 +179,7 @@ export default function Register() {
           <div className="order-2 lg:order-1">
             <div className="bg-white/10">
               <div className="mb-8">
-                <h1 className="text-3xl lg:text-4xl font-semibold text-gray-900 mb-2">Create Account</h1>
+                <h1 className="text-3xl lg:text-4xl font-semibold text-gray-900 mb-2 font-fjalla-one">Create Account</h1>
                 <p className="text-gray-700">Join our basketball community today</p>
               </div>
 
@@ -243,7 +243,7 @@ export default function Register() {
                         ? 'border-red-400 focus:ring-red-500' 
                         : 'border-white/50 focus:ring-purple-500 focus:border-transparent'
                     }`}
-                    placeholder="John Doe"
+                    placeholder="Full Name"
                     disabled={loading}
                   />
                   {errors.name && <p className="text-red-700 text-xs mt-1.5 font-medium">{errors.name}</p>}
@@ -265,7 +265,7 @@ export default function Register() {
                         ? 'border-red-400 focus:ring-red-500' 
                         : 'border-white/50 focus:ring-purple-500 focus:border-transparent'
                     }`}
-                    placeholder="johndoe"
+                    placeholder="username123"
                     disabled={loading}
                   />
                   {errors.username && <p className="text-red-700 text-xs mt-1.5 font-medium">{errors.username}</p>}
@@ -287,7 +287,7 @@ export default function Register() {
                         ? 'border-red-400 focus:ring-red-500' 
                         : 'border-white/50 focus:ring-purple-500 focus:border-transparent'
                     }`}
-                    placeholder="john@example.com"
+                    placeholder="email@example.com"
                     disabled={loading}
                   />
                   {errors.email && <p className="text-red-700 text-xs mt-1.5 font-medium">{errors.email}</p>}
@@ -309,7 +309,7 @@ export default function Register() {
                         ? 'border-red-400 focus:ring-red-500' 
                         : 'border-white/50 focus:ring-purple-500 focus:border-transparent'
                     }`}
-                    placeholder="john@example.com"
+                    placeholder="email@example.com"
                     disabled={loading}
                   />
                   {errors.confirm_email && <p className="text-red-700 text-xs mt-1.5 font-medium">{errors.confirm_email}</p>}
@@ -331,7 +331,7 @@ export default function Register() {
                         ? 'border-red-400 focus:ring-red-500' 
                         : 'border-white/50 focus:ring-purple-500 focus:border-transparent'
                     }`}
-                    placeholder="(123) 456-7890"
+                    placeholder="9800000000"
                     disabled={loading}
                   />
                   {errors.phone && <p className="text-red-700 text-xs mt-1.5 font-medium">{errors.phone}</p>}
@@ -379,7 +379,9 @@ export default function Register() {
                     }`}
                     placeholder="••••••••"
                     disabled={loading}
+                    minLength={8}
                   />
+                  <p className="text-gray-500 text-xs mt-1">{PASSWORD_REQUIREMENTS}</p>
                   {errors.password && <p className="text-red-700 text-xs mt-1.5 font-medium">{errors.password}</p>}
                 </div>
 

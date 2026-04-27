@@ -11,7 +11,8 @@ export default function Footer() {
   return (
     <footer className="bg-[#2e0052] text-white py-8 px-4 md:px-12 flex flex-col md:flex-row items-center justify-between shadow-md">
       <div className="flex flex-col items-center md:items-start mb-6 md:mb-0">
-        <img src="/logohim.png" alt="Logo" className="h-16 w-auto object-contain mb-4" />
+      <img src="/logohim.png" alt="Logo" style={{height: '150px'}} className="w-auto object-contain drop-shadow-lg" />
+
       </div>
 
       <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-12">
@@ -22,8 +23,8 @@ export default function Footer() {
             </span>
           </li>
           <li>
-            <span onClick={() => navigate('/schedule')} className="cursor-pointer hover:text-blue-400">
-              Schedule
+            <span onClick={() => navigate('/events')} className="cursor-pointer hover:text-blue-400">
+              Events
             </span>
           </li>
           <li>
@@ -32,9 +33,9 @@ export default function Footer() {
             </span>
           </li>
           <li>
-            <span onClick={() => navigate('/contact')} className="cursor-pointer hover:text-blue-400">
+            {/* <span onClick={() => navigate('/contact')} className="cursor-pointer hover:text-blue-400">
               Contact
-            </span>
+            </span> */}
           </li>
         </ul>
       </div>

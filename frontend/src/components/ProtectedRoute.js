@@ -1,3 +1,4 @@
+// components/protectedRoute.js
 'use client';
 import { useAuth } from './AuthContext';
 import { useRouter } from 'next/navigation';

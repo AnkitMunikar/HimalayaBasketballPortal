@@ -5,17 +5,18 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from .models import Team
 from events.models import Event
 from enroll.models import TeamEnroll
 from events.serializers import EventSerializer
-from .serializers import RegisterSerializer, TeamSerializer, UserSerializer, ForgotPasswordSerializer, ResetPasswordSerializer
-from .permissions import IsEventOrganizer, IsCoach, IsPlayer
+from .serializers import RegisterSerializer, TeamSerializer, UserSerializer, ForgotPasswordSerializer, ResetPasswordSerializer, AdminUserSerializer
+from .permissions import IsEventOrganizer, IsCoach, IsPlayer, IsAdmin
 from rest_framework.decorators import api_view, permission_classes, action, throttle_classes
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.utils import timezone
-from .utils import send_verification_email, send_password_reset_email
+from .utils import send_verification_email, send_password_reset_email, send_event_rejection_email
 import uuid
 
 # Custom throttle classes
@@ -193,7 +194,7 @@ class OrganizerTeamListCreate(generics.ListCreateAPIView):
     permission_classes = [IsEventOrganizer]
     
     def get_queryset(self):
-        return Team.objects.all().select_related('coach')
+        return Team.objects.all().select_related('coach').prefetch_related('enrollments')
 
 class OrganizerEventListCreate(generics.ListCreateAPIView):
     serializer_class = EventSerializer
@@ -234,8 +235,15 @@ class PlayerEventList(generics.ListAPIView):
     permission_classes = [IsPlayer]
     
     def get_queryset(self):
-        return Event.objects.filter(approval_status='approved').order_by('-date')
-
+        return Event.objects.filter(
+            approval_status='approved'
+        ).select_related(
+            'organizer'
+        ).prefetch_related(
+            'enrollments'
+        ).order_by('-date')
+    
+    
 class PlayerList(generics.ListAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
@@ -273,44 +281,72 @@ def get_user(request):
 class AdminEventListView(generics.ListAPIView):
     """Admin view to see all events regardless of approval status"""
     serializer_class = EventSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdmin]
     
     def get_queryset(self):
-        user = self.request.user
-        if user.is_superuser or user.role == 'admin':
-            return Event.objects.all().order_by('-id')
-        elif user.role == 'event_organizer':
-            return Event.objects.filter(organizer=user).order_by('-id')
-        else:
-            return Event.objects.filter(is_approved=True).order_by('-id')
+        return Event.objects.select_related(
+            'organizer',
+            'approved_by'
+        ).prefetch_related(
+            'enrollments'
+        ).all().order_by('-created_at')
+
+class AdminEventCreateView(generics.CreateAPIView):
+    """Admin can create events and assign any organizer"""
+    queryset = Event.objects.all()
+    serializer_class = EventSerializer
+    permission_classes = [IsAdmin]
+    
+    def perform_create(self, serializer):
+        # Admin can set organizer field (unlike regular EventCreateView)
+        serializer.save()
 
 class AdminEventUpdateView(generics.RetrieveUpdateAPIView):
     """Admin can update any event"""
     queryset = Event.objects.all()
     serializer_class = EventSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdmin]
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAdmin])
 def approve_event(request, event_id):
     """Quick approve an event"""
     try:
         event = Event.objects.get(pk=event_id)
-        event.is_approved = True
+        event.approval_status = 'approved'
+        event.approved_by = request.user
+        event.approved_at = timezone.now()
+        event.rejection_reason = None
         event.save()
         return Response({'status': 'approved'}, status=status.HTTP_200_OK)
     except Event.DoesNotExist:
         return Response({'error': 'Event not found'}, status=status.HTTP_404_NOT_FOUND)
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAdmin])
 def reject_event(request, event_id):
-    """Quick reject an event"""
+    """Reject an event - rejection reason will be shown in organizer dashboard"""
     try:
         event = Event.objects.get(pk=event_id)
-        event.is_approved = False
+        rejection_reason = request.data.get('rejection_reason', '')
+        event.approval_status = 'rejected'
+        event.approved_by = None
+        event.approved_at = None
+        if rejection_reason:
+            event.rejection_reason = rejection_reason
         event.save()
-        return Response({'status': 'rejected'}, status=status.HTTP_200_OK)
+
+        # Send rejection email to organizer
+        try:
+            send_event_rejection_email(event, rejection_reason or '')
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).exception('Failed to send event rejection email: %s', e)
+        
+        return Response({
+            'status': 'rejected', 
+            'message': 'Event rejected successfully. Organizer will see the rejection reason in their dashboard.'
+        }, status=status.HTTP_200_OK)
     except Event.DoesNotExist:
         return Response({'error': 'Event not found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -462,9 +498,10 @@ def reset_password(request):
             
             # Check if token is valid
             if user.is_password_reset_token_valid():
-                # Redirect to frontend with token
+                # Redirect to frontend reset page with token
                 from django.shortcuts import redirect
-                return redirect(f"http://127.0.0.1:8000/api/reset-password/{token}")
+                from django.conf import settings
+                return redirect(f"{settings.SITE_URL}/reset-password?token={token}")
             else:
                 return Response({
                     "error": "This password reset link has expired. Please request a new one."
@@ -502,3 +539,66 @@ def reset_password(request):
         "message": "Password reset successful! You can now login with your new password.",
         "redirect_to_login": True
     }, status=status.HTTP_200_OK)
+
+
+# ============================================================================
+# ADMIN USER MANAGEMENT ENDPOINTS
+# ============================================================================
+
+class AdminUserListView(generics.ListAPIView):
+    """Admin view to list all users"""
+    serializer_class = AdminUserSerializer
+    permission_classes = [IsAdmin]
+    
+    def get_queryset(self):
+        queryset = get_user_model().objects.all().order_by('-date_joined')
+        
+        # Filter by role
+        role = self.request.query_params.get('role', None)
+        if role:
+            queryset = queryset.filter(role=role)
+        
+        # Filter by is_active
+        is_active = self.request.query_params.get('is_active', None)
+        if is_active is not None:
+            is_active_bool = is_active.lower() == 'true'
+            queryset = queryset.filter(is_active=is_active_bool)
+        
+        # Filter by is_email_verified
+        is_email_verified = self.request.query_params.get('is_email_verified', None)
+        if is_email_verified is not None:
+            is_verified_bool = is_email_verified.lower() == 'true'
+            queryset = queryset.filter(is_email_verified=is_verified_bool)
+        
+        # Search by username, email, or name
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(username__icontains=search) |
+                Q(email__icontains=search) |
+                Q(name__icontains=search)
+            )
+        
+        return queryset
+
+
+class AdminUserDetailView(generics.RetrieveAPIView):
+    """Admin view to retrieve user details"""
+    queryset = get_user_model().objects.all()
+    serializer_class = AdminUserSerializer
+    permission_classes = [IsAdmin]
+
+
+class AdminUserUpdateView(generics.UpdateAPIView):
+    """Admin view to update user. Accepts partial updates (e.g. only role, is_active, is_email_verified)."""
+    queryset = get_user_model().objects.all()
+    serializer_class = AdminUserSerializer
+    permission_classes = [IsAdmin]
+
+    def get_serializer(self, *args, **kwargs):
+        # Allow partial updates so admin dashboard can send only changed fields
+        kwargs['partial'] = True
+        return super().get_serializer(*args, **kwargs)
+
+    def perform_update(self, serializer):
+        serializer.save()

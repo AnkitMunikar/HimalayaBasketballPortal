@@ -32,29 +32,28 @@ export default function Header() {
         </button>
         <ul className="hidden md:flex space-x-6 text-white font-medium">
           <li><span onClick={() => navigate('/')} className="cursor-pointer hover:text-blue-400">Home</span></li>
-          {/* <li><span onClick={() => navigate('/schedule')} className="cursor-pointer hover:text-blue-400">Schedule</span></li>
-          <li><span onClick={() => navigate('/stats')} className="cursor-pointer hover:text-blue-400">Stats</span></li> */}
+          <li><span onClick={() => navigate('/events')} className="cursor-pointer hover:text-blue-400">Events</span></li>
           {user?.role === 'event_organizer' && (
             <>
-              <li><span onClick={() => navigate('/Organizer')} className="cursor-pointer hover:text-blue-400">Organizer Dashboard</span></li>
-              <li><span onClick={() => navigate('/Organizer/Create')} className="cursor-pointer hover:text-blue-400">Create Events</span></li>
+              <li><span onClick={() => navigate('/Organizer/Register')} className="cursor-pointer hover:text-blue-400">Event Register</span></li>
+              <li><span onClick={() => navigate('/Organizer/Dashboard')} className="cursor-pointer hover:text-blue-400">Event Dashboard</span></li>
             </>
           )}
           {user?.role === 'coach' && (
             <li><span onClick={() => navigate('/Coach')} className="cursor-pointer hover:text-blue-400">Coach Dashboard</span></li>
           )}
           {user?.role === 'admin' && (
-            <li><span onClick={() => navigate('/admin/Dashboard')} className="cursor-pointer hover:text-blue-400">Admin Panel</span></li>
+            <li><span onClick={() => navigate('/Admin')} className="cursor-pointer hover:text-blue-400">Admin Panel</span></li>
           )}
           {user?.role === 'player' && (
-            <li><span onClick={() => navigate('/player/dashboard')} className="cursor-pointer hover:text-blue-400">Dashboard</span></li>
+            <li><span onClick={() => navigate('/Player/Dashboard')} className="cursor-pointer hover:text-blue-400">Dashboard</span></li>
           )}
           <li><span onClick={() => navigate('/Aboutus')} className="cursor-pointer hover:text-blue-400">About us</span></li>
         </ul>
       </div>
 
       <div className="absolute left-1/2 top-full -translate-x-1/2 -translate-y-1/2 z-10">
-        <img src="/logohim.png" alt="Logo" className="h-28 w-auto object-contain drop-shadow-lg" />
+      <img src="/logohim.png" alt="Logo" style={{height: '150px'}} className="w-auto object-contain drop-shadow-lg" />
       </div>
 
       <div className="hidden sm:flex items-center space-x-4">
@@ -75,28 +74,27 @@ export default function Header() {
         <div className="absolute top-full left-0 w-full bg-[#2e0052] shadow-md md:hidden">
           <ul className="flex flex-col space-y-4 p-4 text-white font-medium">
             <li><span onClick={() => navigate('/')} className="cursor-pointer hover:text-blue-400">Home</span></li>
-            {/* <li><span onClick={() => navigate('/schedule')} className="cursor-pointer hover:text-blue-400">Schedule</span></li>
-            <li><span onClick={() => navigate('/stats')} className="cursor-pointer hover:text-blue-400">Stats</span></li> */}
+            <li><span onClick={() => navigate('/events')} className="cursor-pointer hover:text-blue-400">Events</span></li>
             {user?.role === 'event_organizer' && (
               <>
-                <li><span onClick={() => navigate('/organizer')} className="cursor-pointer hover:text-blue-400">Organizer Dashboard</span></li>
-                <li><span onClick={() => navigate('/organizer/create')} className="cursor-pointer hover:text-blue-400">Create Events</span></li>
+                <li><span onClick={() => navigate('/Organizer/Register')} className="cursor-pointer hover:text-blue-400">Event Register</span></li>
+                <li><span onClick={() => navigate('/Organizer/Dashboard')} className="cursor-pointer hover:text-blue-400">Event Dashboard</span></li>
               </>
             )}
             {user?.role === 'coach' && (
-              <li><span onClick={() => navigate('/coach')} className="cursor-pointer hover:text-blue-400">Coach Dashboard</span></li>
+              <li><span onClick={() => navigate('/Coach')} className="cursor-pointer hover:text-blue-400">Coach Dashboard</span></li>
             )}
             {user?.role === 'admin' && (
-              <li><span onClick={() => navigate('/admin/dashboard')} className="cursor-pointer hover:text-blue-400">Admin Panel</span></li>
+              <li><span onClick={() => navigate('/Admin')} className="cursor-pointer hover:text-blue-400">Admin Panel</span></li>
             )}
             {user?.role === 'player' && (
-              <li><span onClick={() => navigate('/player/dashboard')} className="cursor-pointer hover:text-blue-400">Dashboard</span></li>
+              <li><span onClick={() => navigate('/Player/Dashboard')} className="cursor-pointer hover:text-blue-400">Dashboard</span></li>
             )}
-            <li><span onClick={() => navigate('/aboutus')} className="cursor-pointer hover:text-blue-400">About us</span></li>
+            <li><span onClick={() => navigate('/Aboutus')} className="cursor-pointer hover:text-blue-400">About us</span></li>
             {!user ? (
               <>
-                <li><span onClick={() => navigate('/signup')} className="cursor-pointer hover:text-blue-400">Sign up</span></li>
-                <li><span onClick={() => navigate('/login')} className="cursor-pointer hover:text-blue-400">Log in</span></li>
+                <li><span onClick={() => navigate('/Signup')} className="cursor-pointer hover:text-blue-400">Sign up</span></li>
+                <li><span onClick={() => navigate('/Login')} className="cursor-pointer hover:text-blue-400">Log in</span></li>
               </>
             ) : (
               <>

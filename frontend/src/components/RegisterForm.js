@@ -131,7 +131,14 @@ export default function RegisterForm() {
             Register
           </button>
         </form>
-        {message && <p className="text-center text-sm text-gray-600 font-fjalla-one">{message}</p>}
+        {message && (
+          <div
+            className={`toast-message-right ${message.includes('success') || message.includes('successful') ? 'success' : 'error'}`}
+            role="alert"
+          >
+            <p className="font-medium text-sm font-fjalla-one">{message}</p>
+          </div>
+        )}
       </div>
     </div>
   );

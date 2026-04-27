@@ -7,7 +7,8 @@ from .views import (
     PlayerEventList, PlayerList, CustomTokenObtainPairView,
     get_user, verify_email, resend_verification_email,
     forgot_password, verify_reset_token, reset_password,  # 🔐 NEW IMPORTS
-    AdminEventListView, AdminEventUpdateView, approve_event, reject_event
+    AdminEventListView, AdminEventCreateView, AdminEventUpdateView, approve_event, reject_event,
+    AdminUserListView, AdminUserDetailView, AdminUserUpdateView
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -42,7 +43,13 @@ urlpatterns = [
     
     # ============ Admin/Event Approval endpoints ============
     path('admin/events/', AdminEventListView.as_view(), name='admin_events'),
+    path('admin/events/create/', AdminEventCreateView.as_view(), name='admin-event-create'),
     path('admin/events/<int:pk>/', AdminEventUpdateView.as_view(), name='admin_event_detail'),
     path('admin/events/<int:event_id>/approve/', approve_event, name='approve_event'),
     path('admin/events/<int:event_id>/reject/', reject_event, name='reject_event'),
+    
+    # ============ Admin User Management endpoints ============
+    path('admin/users/', AdminUserListView.as_view(), name='admin-users-list'),
+    path('admin/users/<int:pk>/', AdminUserDetailView.as_view(), name='admin-user-detail'),
+    path('admin/users/<int:pk>/update/', AdminUserUpdateView.as_view(), name='admin-user-update'),
 ]

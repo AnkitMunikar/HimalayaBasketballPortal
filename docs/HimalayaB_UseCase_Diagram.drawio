@@ -1,0 +1,132 @@
+<mxfile host="app.diagrams.net" modified="2025-02-02T00:00:00.000Z" agent="HimalayaB" version="22.1.0" etag="usecase-extend-include" type="device">
+  <diagram name="HimalayaB Use Case (Include Extend)" id="himalayab-usecase">
+    <mxGraphModel dx="1100" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="HimalayaB — Use Case Diagram (Include / Extend)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="280" y="12" width="380" height="24" as="geometry"/>
+        </mxCell>
+
+        <!-- System boundary -->
+        <mxCell id="boundary" value="HimalayaB Portal" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;strokeWidth=1;dashed=1;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="48" width="580" height="520" as="geometry"/>
+        </mxCell>
+
+        <!-- Use cases (ellipses) inside boundary -->
+        <mxCell id="uc-register" value="Register" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="280" y="80" width="90" height="44" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc-login" value="Login" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="420" y="80" width="80" height="44" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc-verify-email" value="Verify Email" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="260" y="140" width="100" height="44" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc-validate-creds" value="Validate Credentials" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="400" y="140" width="120" height="44" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc-create-event" value="Create Event" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="560" y="80" width="100" height="44" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc-approve-event" value="Approve/Reject Event" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="540" y="200" width="130" height="44" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc-enroll-team" value="Enroll Team" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="280" y="260" width="100" height="44" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc-validate-players" value="Validate Players" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="260" y="320" width="120" height="44" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc-pay-khalti" value="Pay (Khalti)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="420" y="320" width="100" height="44" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc-view-events" value="View Events" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="400" y="380" width="100" height="44" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc-update-standings" value="Update Standings" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="540" y="380" width="120" height="44" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc-manage-users" value="Manage Users" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="540" y="460" width="110" height="44" as="geometry"/>
+        </mxCell>
+
+        <!-- Actors: separate boxes, one per role (not in one box) -->
+        <mxCell id="actor-admin" value="Admin" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="180" width="80" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="actor-organizer" value="Event Organizer" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="48" y="280" width="104" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="actor-coach" value="Coach" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="72" y="380" width="80" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="actor-player" value="Player" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="68" y="480" width="80" height="36" as="geometry"/>
+        </mxCell>
+
+        <!-- Associations: Actor to Use Case (solid line) -->
+        <mxCell id="a-admin-approve" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="actor-admin" target="uc-approve-event">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a-admin-users" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="actor-admin" target="uc-manage-users">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a-admin-standings" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="actor-admin" target="uc-update-standings">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a-admin-view" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="actor-admin" target="uc-view-events">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a-org-create" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="actor-organizer" target="uc-create-event">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a-org-standings" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="actor-organizer" target="uc-update-standings">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a-org-view" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="actor-organizer" target="uc-view-events">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a-coach-register" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="actor-coach" target="uc-register">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a-coach-login" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="actor-coach" target="uc-login">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a-coach-enroll" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="actor-coach" target="uc-enroll-team">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a-coach-view" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="actor-coach" target="uc-view-events">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a-player-register" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="actor-player" target="uc-register">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a-player-login" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="actor-player" target="uc-login">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a-player-view" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="actor-player" target="uc-view-events">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Include: dashed arrow FROM base TO included, label <<include>> -->
+        <mxCell id="inc-reg-verify" value="&#171;include&#187;" style="endArrow=open;endFill=0;html=1;rounded=0;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;fontSize=9;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="uc-register" target="uc-verify-email">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="inc-login-validate" value="&#171;include&#187;" style="endArrow=open;endFill=0;html=1;rounded=0;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;fontSize=9;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="uc-login" target="uc-validate-creds">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="inc-enroll-validate" value="&#171;include&#187;" style="endArrow=open;endFill=0;html=1;rounded=0;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;fontSize=9;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="uc-enroll-team" target="uc-validate-players">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Extend: dashed arrow FROM extending TO base, label <<extend>> -->
+        <mxCell id="ext-pay-enroll" value="&#171;extend&#187;&#xa;(paid event)" style="endArrow=open;endFill=0;html=1;rounded=0;dashed=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;fontSize=9;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="uc-pay-khalti" target="uc-enroll-team">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -70,7 +70,7 @@ export default function EventForm({ onEventSubmitted }) {
       onSubmit={handleSubmit}
       className="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-lg border border-gray-200"
     >
-      <h2 className="text-2xl font-semibold text-center text-violet-700 mb-6">
+      <h2 className="text-2xl font-semibold text-center text-violet-700 mb-6 font-fjalla-one">
         Add Tournament Event
       </h2>
       {error && <p className="text-center text-red-500 mb-4">{error}</p>}

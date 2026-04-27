@@ -8,9 +8,21 @@ from django.contrib.auth.password_validation import validate_password
 
 class UserSerializer(serializers.ModelSerializer):
     """Simple user serializer for listings"""
+    is_superuser = serializers.BooleanField(read_only=True)
+    
     class Meta:
         model = get_user_model()
-        fields = ['id', 'username', 'email', 'name', 'phone', 'role', 'is_email_verified']
+        fields = ['id', 'username', 'email', 'name', 'phone', 'role', 'is_email_verified', 'is_superuser']
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    """Admin-specific user serializer with additional fields"""
+    class Meta:
+        model = get_user_model()
+        fields = [
+            'id', 'username', 'email', 'name', 'phone', 'role', 
+            'is_active', 'is_email_verified', 'date_joined', 'last_login'
+        ]
+        read_only_fields = ['id', 'date_joined', 'last_login']
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
@@ -27,6 +39,11 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"confirm_email": "Emails must match"})
         if data['password'] != data['confirm_password']:
             raise serializers.ValidationError({"confirm_password": "Passwords must match"})
+        # Enforce: min 8 chars, at least one uppercase, one digit, one special character
+        try:
+            validate_password(data['password'])
+        except Exception as e:
+            raise serializers.ValidationError({"password": list(e.messages)})
         if get_user_model().objects.filter(username=data['username']).exists():
             raise serializers.ValidationError({"username": "This username is already taken"})
         if get_user_model().objects.filter(email=data['email']).exists():
@@ -105,7 +122,7 @@ class TeamWithPlayersSerializer(serializers.ModelSerializer):
                     'age': player.age,
                     'position': player.position,
                     'jersey_no': player.jersey_no,
-                    'grade': player.grade,
+                    # 'grade': player.grade,
                     'enrollment_id': enrollment.id,
                     'event_name': enrollment.event.name
                 })

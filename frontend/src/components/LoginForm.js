@@ -21,14 +21,18 @@ export default function Login() {
   useEffect(() => {
     if (user) {
       const role = user.role;
-      if (role === 'event_organizer') {
+      const isAdmin = user.is_superuser || role === 'admin';
+      
+      if (isAdmin) {
+        router.push('/Admin');
+      } else if (role === 'event_organizer') {
         router.push('/Organizer');
       } else if (role === 'coach') {
         router.push('/Coach');
       } else if (role === 'player') {
         router.push('/Player/Dashboard');
       } else {
-        router.push('/dashboard');
+        router.push('/');
       }
     }
   }, [user, router]);
@@ -96,14 +100,19 @@ export default function Login() {
       
 
         const role = result.user?.role;
-        if (role === 'event_organizer') {
+        // Check if superuser (admin) even if role is different
+        const isAdmin = result.user?.is_superuser || role === 'admin';
+        
+        if (isAdmin) {
+          router.push('/Admin');
+        } else if (role === 'event_organizer') {
           router.push('/Organizer');
         } else if (role === 'coach') {
           router.push('/Coach');
         } else if (role === 'player') {
           router.push('/Player/Dashboard');
         } else {
-          router.push('/dashboard');
+          router.push('/');
         }
       } else {
         if (result.error?.verification_required) {
@@ -131,7 +140,7 @@ export default function Login() {
           <div className="order-2 lg:order-1">
             <div className="bg-white/10">
               <div className="mb-8">
-                <h1 className="text-3xl lg:text-4xl font-semibold text-gray-900 mb-2">Welcome Back</h1>
+                <h1 className="text-3xl lg:text-4xl font-semibold text-gray-900 mb-2 font-fjalla-one">Welcome Back</h1>
                 <p className="text-gray-700">Login to your basketball account</p>
               </div>
 
@@ -244,13 +253,12 @@ export default function Login() {
                     Don't have an account?{' '}
                     <button
                       type="button"
-                      onClick={() => router.push('/Register')}
+                      onClick={() => router.push('/Signup')}
                       className="text-purple-600 hover:text-purple-700 font-medium transition-colors"
                     >
                       Sign Up
                     </button>
                   </p>
-                  
                   <p className="text-sm text-gray-600">
                     <button
                       type="button"

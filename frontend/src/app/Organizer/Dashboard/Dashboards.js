@@ -4,7 +4,6 @@ import {
   Calendar,
   MapPin,
   Users,
-  DollarSign,
   Edit,
   Trash2,
   Eye,
@@ -27,6 +26,7 @@ const OrganizerDashboard = () => {
   const [editingTeam, setEditingTeam] = useState(null);
   const [showTeamForm, setShowTeamForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [rejectionNotifications, setRejectionNotifications] = useState([]);
 
   /* ---------- AUTH HELPERS ---------- */
   const getUserId = () => {
@@ -59,6 +59,19 @@ const OrganizerDashboard = () => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setEvents(data);
+      
+      // Check for rejected events with rejection reasons
+      const rejectedEvents = data.filter(
+        event => event.approval_status === 'rejected' && event.rejection_reason
+      );
+      
+      if (rejectedEvents.length > 0) {
+        setRejectionNotifications(rejectedEvents.map(event => ({
+          id: event.id,
+          eventName: event.name,
+          reason: event.rejection_reason,
+        })));
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -242,10 +255,10 @@ const OrganizerDashboard = () => {
     };
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-        <div className="bg-white rounded-2xl w-full max-w-2xl my-8">
-          <div className="flex justify-between items-center p-6 border-b border-gray-200">
-            <h3 className="text-xl font-bold text-gray-900">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
+        <div className="bg-white rounded-2xl w-full max-w-2xl my-4 sm:my-8 mx-2 sm:mx-4">
+          <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 font-fjalla-one">
               {event?.id ? "Edit Event" : "Create New Event"}
             </h3>
             <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -486,10 +499,10 @@ const OrganizerDashboard = () => {
     };
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-2xl w-full max-w-md">
-          <div className="flex justify-between items-center p-6 border-b border-gray-200">
-            <h3 className="text-xl font-bold text-gray-900">Edit Team</h3>
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-2xl w-full max-w-md mx-2 sm:mx-4 my-4 sm:my-8">
+          <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 font-fjalla-one">Edit Team</h3>
             <button onClick={onClose}><X className="w-6 h-6" /></button>
           </div>
 
@@ -542,10 +555,10 @@ const OrganizerDashboard = () => {
 
   /* ---------- TEAMS MODAL ---------- */
   const TeamsModal = ({ event, onClose }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-      <div className="bg-white rounded-2xl w-full max-w-2xl my-8">
-        <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h3 className="text-xl font-bold text-gray-900">{event.name} - Teams</h3>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="bg-white rounded-2xl w-full max-w-2xl my-4 sm:my-8 mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 sm:p-6 border-b border-gray-200 gap-4">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 font-fjalla-one">{event.name} - Teams</h3>
           <button onClick={onClose}><X className="w-6 h-6" /></button>
         </div>
 
@@ -597,15 +610,58 @@ const OrganizerDashboard = () => {
   );
 
   /* ---------- RENDER ---------- */
+  // Function to dismiss a rejection notification
+  const dismissNotification = (id) => {
+    setRejectionNotifications(prev => prev.filter(notif => notif.id !== id));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Rejection Notifications Popup */}
+      {rejectionNotifications.length > 0 && (
+        <div className="fixed top-20 right-6 z-50 space-y-4 max-w-md">
+          {rejectionNotifications.map((notification) => (
+            <div
+              key={notification.id}
+              className="bg-red-50 border-l-4 border-red-500 rounded-lg shadow-lg p-4 transform transition-all duration-300"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                    <h3 className="text-lg font-bold text-red-900">Event Rejected</h3>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-800 mb-2">
+                    Event: {notification.eventName}
+                  </p>
+                  <div className="bg-white rounded p-3 mb-3">
+                    <p className="text-xs font-medium text-gray-600 mb-1">Rejection Reason:</p>
+                    <p className="text-sm text-gray-900">{notification.reason}</p>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Please review and make necessary corrections to resubmit your event.
+                  </p>
+                </div>
+                <button
+                  onClick={() => dismissNotification(notification.id)}
+                  className="ml-4 text-gray-400 hover:text-gray-600 transition"
+                  title="Dismiss"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-6 py-12">
 
         {/* Header – NO CREATE BUTTON */}
-        <div className="flex justify-between items-center mb-10">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-10 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Organizer Dashboard</h1>
-            <p className="text-gray-600 mt-2">Manage your tournaments and teams</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 font-fjalla-one">Organizer Dashboard</h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-2">Manage your tournaments and teams</p>
           </div>
         </div>
 
@@ -615,7 +671,7 @@ const OrganizerDashboard = () => {
             <Loader className="w-8 h-8 animate-spin text-violet-600" />
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {events.length === 0 ? (
               <p className="col-span-full text-center py-12 text-gray-500">No events found.</p>
             ) : (
@@ -671,7 +727,7 @@ const OrganizerDashboard = () => {
                           {event.gender} • {event.level}
                         </p>
                         <p className="flex items-center">
-                          <DollarSign className="w-4 h-4 mr-2 text-violet-600" />
+                          <span className="font-semibold text-violet-600 mr-2">Rs.</span>
                           {event.payment}
                         </p>
                       </div>
@@ -679,14 +735,12 @@ const OrganizerDashboard = () => {
                       <div className="flex gap-2">
                         <button
                           onClick={() => {
-                            setSelectedEvent(event);
-                            fetchTeamsForEvent(event.id);
-                            setShowTeamsModal(true);
+                            window.location.href = `/Organizer/events/${event.id}`;
                           }}
                           className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-2 px-3 rounded-lg transition text-sm flex items-center justify-center"
                         >
                           <Eye className="w-4 h-4 mr-1" />
-                          Teams
+                          View Details
                         </button>
 
                         <button

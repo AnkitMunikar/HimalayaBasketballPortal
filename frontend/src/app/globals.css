@@ -9,7 +9,7 @@
   --foreground: #171717;
 }
 
-@theme inline {
+@theme nline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -35,4 +35,84 @@ body {
 .fade-top {
   -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
   mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+}
+
+/* Responsive utilities */
+* {
+  box-sizing: border-box;
+}
+
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+}
+
+/* Message box: slide in from right */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+.toast-message-right {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  max-width: 24rem;
+  min-width: 18rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.15), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  animation: slide-in-right 0.35s ease-out forwards;
+}
+.toast-message-right.error {
+  background: #fef2f2;
+  border-left: 4px solid #dc2626;
+  color: #b91c1c;
+}
+.toast-message-right.success {
+  background: #f0fdf4;
+  border-left: 4px solid #16a34a;
+  color: #15803d;
+}
+.toast-message-right.info {
+  background: #eff6ff;
+  border-left: 4px solid #2563eb;
+  color: #1d4ed8;
+}
+
+/* Admin dashboard: slightly larger fonts for readability */
+.admin-dashboard .text-xs {
+  font-size: 0.9375rem;
+}
+.admin-dashboard .text-sm {
+  font-size: 1rem;
+}
+.admin-dashboard .text-base {
+  font-size: 1.0625rem;
+}
+.admin-dashboard input,
+.admin-dashboard select,
+.admin-dashboard button,
+.admin-dashboard label {
+  font-size: 1rem;
 }

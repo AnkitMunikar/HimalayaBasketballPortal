@@ -1,7 +1,7 @@
 'use client';
 import Header from '@/components/Header';
 import CoachDashboard from './Dashboard/CoachDashboard';
-
+import Footer from '@/components/Footer';
 export default function Coach() {
   return (
     <main className="min-h-screen flex flex-col bg-gray-50">
@@ -9,6 +9,7 @@ export default function Coach() {
       <div className='mt-24'>
       <CoachDashboard />
       </div>
+      <Footer />
     </main>
   );
 }

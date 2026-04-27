@@ -1,6 +1,9 @@
+// frontend/src/components/VerifyEmail.js
 'use client';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Header from './Header';
+
 
 export default function VerifyEmail() {
   const params = useParams();
@@ -11,15 +14,15 @@ export default function VerifyEmail() {
 
   useEffect(() => {
     const verifyEmail = async () => {
-      // ✅ Extract token and ensure it's a string
+      // ✅ Extract token from URL params - params.token comes from [token] folder
       let token = params.token;
       
-      // If token is an array, get first element
+      // If token is an array (shouldn't happen with [token] syntax), get first element
       if (Array.isArray(token)) {
         token = token[0];
       }
       
-      console.log('Extracted token:', token);
+      console.log('Extracted token from URL:', token);
       
       if (!token) {
         setStatus('error');
@@ -28,13 +31,13 @@ export default function VerifyEmail() {
       }
 
       try {
-        // ✅ This is correct - sends { "token": "uuid-here" }
+        // ✅ Send token in POST request body to backend API
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/verify-email/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ token: token }), // Explicit key-value
+          body: JSON.stringify({ token: token }), // Backend expects token in body
         });
 
         const data = await response.json();
@@ -44,6 +47,7 @@ export default function VerifyEmail() {
           setStatus('success');
           setMessage(data.message || 'Email verified successfully!');
           
+          // Auto-redirect to login after 5 seconds
           let seconds = 5;
           const timer = setInterval(() => {
             seconds -= 1;
@@ -58,7 +62,7 @@ export default function VerifyEmail() {
           return () => clearInterval(timer);
         } else {
           setStatus('error');
-          setMessage(data.error || 'Verification failed.');
+          setMessage(data.error || 'Verification failed. Please try again.');
         }
       } catch (error) {
         console.error('Verification error:', error);
@@ -72,6 +76,7 @@ export default function VerifyEmail() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center p-4">
+      <Header />
       <div className="max-w-md w-full">
         
         {status === 'verifying' && (
@@ -82,7 +87,7 @@ export default function VerifyEmail() {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Verifying Your Email</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2 font-fjalla-one">Verifying Your Email</h2>
             <p className="text-gray-600">Please wait while we verify your email...</p>
           </div>
         )}
@@ -119,12 +124,12 @@ export default function VerifyEmail() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Verification Failed</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2 font-fjalla-one">Verification Failed</h2>
             <p className="text-gray-600 mb-6">{message}</p>
             
             <div className="space-y-3">
               <button
-                onClick={() => router.push('/Register')}
+                onClick={() => router.push('/Signup')}
                 className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700"
               >
                 Register Again

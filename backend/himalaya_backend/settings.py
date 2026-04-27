@@ -111,13 +111,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Authentication
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
-# Password validation
+# Password validation: min 8 chars, at least one uppercase, one digit, one special character
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 8},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -125,6 +126,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {'NAME': 'accounts.validators.UppercaseValidator'},
+    {'NAME': 'accounts.validators.DigitValidator'},
+    {'NAME': 'accounts.validators.SpecialCharacterValidator'},
 ]
 
 # Internationalization
@@ -167,8 +171,8 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'anki.mk56@gmail.com'
-EMAIL_HOST_PASSWORD = 'axlt qcsk cxze vnqm'
-DEFAULT_FROM_EMAIL = 'HIMALAYAB Basketball <anki.mk56@gmail.com>'
+EMAIL_HOST_PASSWORD = 'yvkf nyqn ezex aqdr'
+DEFAULT_FROM_EMAIL = 'HIMALAYA Basketball <anki.mk56@gmail.com>'
 
 # Frontend URL for verification links
 SITE_URL = env('SITE_URL', default='http://localhost:3000')
@@ -194,3 +198,20 @@ LOGGING = {
         },
     },
 }
+
+# ============= KHALTI PAYMENT GATEWAY CONFIGURATION =============
+
+# Sandbox Configuration
+# IMPORTANT: For sandbox testing, get your keys from: https://test-admin.khalti.com/#/join/merchant
+# Use OTP: 987654 to login to test-admin dashboard
+# Get your live_secret_key from the test-admin dashboard and use it here
+KHALTI_PUBLIC_KEY = env('KHALTI_PUBLIC_KEY', default='be3f1e6fc3ee49acac1377dd98f76800')  # Sandbox public key
+KHALTI_SECRET_KEY = env('KHALTI_SECRET_KEY', default='8f009a846e2c4bfb80ba85c44fcb0913')  # Sandbox secret key
+# Use sandbox URL for testing, production URL for live
+KHALTI_BASE_URL = env('KHALTI_BASE_URL', default='https://dev.khalti.com/api/v2')  # Sandbox: https://dev.khalti.com/api/v2, Production: https://khalti.com/api/v2
+KHALTI_INITIATE_URL = f'{KHALTI_BASE_URL}/epayment/initiate/'  # Payment initiation endpoint (correct endpoint)
+KHALTI_VERIFY_URL = f'{KHALTI_BASE_URL}/epayment/lookup/'  # Payment verification/lookup endpoint
+KHALTI_API_URL = KHALTI_VERIFY_URL  # Alias for backward compatibility
+# Callback URLs (Frontend URLs where user is redirected after payment)
+KHALTI_RETURN_URL = 'http://localhost:3000/payment-success'  # Frontend payment success page
+KHALTI_WEBSITE_URL = 'http://localhost:3000'

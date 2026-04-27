@@ -16,5 +16,5 @@ export default function Signup() {
       <Footer />
     </main>
   );
-}
+} 
  

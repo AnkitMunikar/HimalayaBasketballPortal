@@ -4,6 +4,22 @@ from django.contrib.auth.models import AbstractUser
 import uuid
 from django.utils import timezone
 from datetime import timedelta
+import os
+from django.core.exceptions import ValidationError
+
+def validate_image_extension(value):
+    """Validate that the file is an image"""
+    ext = os.path.splitext(value.name)[1].lower()
+    valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg']
+    if ext not in valid_extensions:
+        raise ValidationError(f'Unsupported file extension. Allowed: {", ".join(valid_extensions)}')
+
+def validate_pdf_extension(value):
+    """Validate that the file is a PDF"""
+    ext = os.path.splitext(value.name)[1].lower()
+    if ext != '.pdf':
+        raise ValidationError('Only PDF files are allowed for venue receipts.')
+
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
@@ -56,7 +72,7 @@ class CustomUser(AbstractUser):
         self.password_reset_used = False  # Reset the used flag
         self.save(update_fields=['password_reset_token', 'password_reset_sent_at', 'password_reset_used'])
         print(f"Password reset token generated for {self.email}: {self.password_reset_token}")
-    
+   
     def is_password_reset_token_valid(self):
         """
         Check if password reset token is valid
@@ -101,3 +117,5 @@ class Team(models.Model):
 
     def __str__(self):
         return self.name
+    
+
