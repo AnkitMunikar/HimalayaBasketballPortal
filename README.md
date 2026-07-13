@@ -5,7 +5,7 @@ HimalayaB is a web application for organizing and participating in basketball ev
 - **Frontend**: Next.js + React
 - **Backend**: Django + Django REST Framework (JWT authentication)
 - **Database**: MySQL
-- **Payments**: Khalti (for paid event enrollments)
+- **Payments**: Khalti Sandbox(dummy)
 
 ---
 
