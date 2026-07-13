@@ -1,6 +1,6 @@
-# HimalayaB (Basketball Portal)
+# Himalaya Basketball Portal
 
-HimalayaB is a web application for organizing and participating in basketball events and tournaments. It provides role-based dashboards for **organizers**, **coaches**, **players**, and **admins**.
+Himalaya Basketball Portal is a web application for organizing and participating in basketball events and tournaments. It provides role-based dashboards for **organizers**, **coaches**, **players**, and **admins**.
 
 - **Frontend**: Next.js + React
 - **Backend**: Django + Django REST Framework (JWT authentication)
